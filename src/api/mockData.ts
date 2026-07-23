@@ -216,34 +216,34 @@ export const mockReservations: Reservation[] = [
 export const mockRagDocuments: RagDocument[] = [
   {
     id: "rag-1",
-    type: "PRICE",
-    title: "Qiymət cədvəli",
+    category: "pricing",
     content:
       "Diş təmizliyi — 60 AZN\nDiş ağardılması — 150 AZN\nPlomb — 40-80 AZN\nİmplant konsultasiyası — pulsuz",
-    updatedAt: "2026-07-18T12:00:00Z",
+    source: "mock",
+    createdAt: "2026-07-18T12:00:00Z",
   },
   {
     id: "rag-2",
-    type: "SERVICE",
-    title: "Xidmətlər",
+    category: "services",
     content:
       "Terapevtik stomatologiya, ortodontiya, implantologiya, uşaq stomatologiyası, professional gigiyena.",
-    updatedAt: "2026-07-18T12:05:00Z",
+    source: "mock",
+    createdAt: "2026-07-18T12:05:00Z",
   },
   {
     id: "rag-3",
-    type: "FAQ",
-    title: "Tez-tez verilən suallar",
+    category: "faq",
     content:
       "S: Parkinq varmı? C: Bəli, binanın arxasında pulsuz parkinq.\nS: Sığorta qəbul edirsiniz? C: Paşa və Atəşgah sığortaları qəbul olunur.",
-    updatedAt: "2026-07-15T09:30:00Z",
+    source: "mock",
+    createdAt: "2026-07-15T09:30:00Z",
   },
   {
     id: "rag-4",
-    type: "HOURS",
-    title: "İş saatları",
+    category: "working-hours",
     content: "Bazar ertəsi – Cümə: 09:00–18:00\nŞənbə: 10:00–14:00\nBazar: bağlı",
-    updatedAt: "2026-07-10T08:00:00Z",
+    source: "mock",
+    createdAt: "2026-07-10T08:00:00Z",
   },
 ];
 

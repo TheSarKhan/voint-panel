@@ -23,7 +23,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       const res = await login(email.trim(), password);
-      setSession(res.token, res.user);
+      setSession(res.token, res.user, res.refreshToken);
       navigate("/", { replace: true });
     } catch (err) {
       const message =

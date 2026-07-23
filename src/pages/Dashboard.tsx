@@ -6,11 +6,12 @@ import { Card, PageHeader, Spinner } from "../components/ui";
 import { formatDate, formatDuration, formatPercent } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
-function CallsBarChart({ data }: { data: AnalyticsOverview["callsByDay"] }) {
-  const max = Math.max(...data.map((d) => d.count), 1);
+function CallsBarChart({ data }: { data: AnalyticsOverview["callsByDay"] | undefined }) {
+  const days = data ?? [];
+  const max = Math.max(...days.map((d) => d.count), 1);
   return (
     <div className="flex h-48 items-end gap-3">
-      {data.map((d) => {
+      {days.map((d) => {
         const h = Math.max((d.count / max) * 100, 4);
         return (
           <div

@@ -1,15 +1,50 @@
 import { delay, http, withFallback } from "./client";
 import { DEMO_EMAIL, DEMO_PASSWORD, MOCK_TOKEN, mockUser } from "./mockData";
 import type { AuthUser, LoginResponse } from "./types";
+import { useAuthStore } from "../store/auth";
+
+// Backend (com.starsoft.voint.auth) sekilleri — panelin daxili LoginResponse/AuthUser
+// tipl huri ile fergli olduguna gore burada map edilir.
+interface BackendTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+}
+
+interface BackendMeResponse {
+  id: string;
+  tenantId: string;
+  email: string;
+  role: string;
+}
+
+function toAuthUser(me: BackendMeResponse): AuthUser {
+  return {
+    id: me.id,
+    email: me.email,
+    name: me.email.split("@")[0],
+    tenantId: me.tenantId,
+    role: me.role,
+  };
+}
+
+/** /auth/me-ni verilmis access token ile cagirir — hele store-a yazilmamis tokenler ucun. */
+async function fetchMeWithToken(accessToken: string): Promise<AuthUser> {
+  const { data } = await http.get<BackendMeResponse>("/auth/me", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return toAuthUser(data);
+}
 
 export function login(email: string, password: string): Promise<LoginResponse> {
   return withFallback(
     async () => {
-      const { data } = await http.post<LoginResponse>("/auth/login", {
+      const { data } = await http.post<BackendTokenResponse>("/auth/login", {
         email,
         password,
       });
-      return data;
+      const user = await fetchMeWithToken(data.accessToken);
+      return { token: data.accessToken, refreshToken: data.refreshToken, user };
     },
     async () => {
       await delay(400);
@@ -24,8 +59,11 @@ export function login(email: string, password: string): Promise<LoginResponse> {
 export function refresh(): Promise<LoginResponse> {
   return withFallback(
     async () => {
-      const { data } = await http.post<LoginResponse>("/auth/refresh");
-      return data;
+      const refreshToken = useAuthStore.getState().refreshToken;
+      if (!refreshToken) throw new Error("No refresh token available");
+      const { data } = await http.post<BackendTokenResponse>("/auth/refresh", { refreshToken });
+      const user = await fetchMeWithToken(data.accessToken);
+      return { token: data.accessToken, refreshToken: data.refreshToken, user };
     },
     async () => {
       await delay(150);
@@ -37,8 +75,8 @@ export function refresh(): Promise<LoginResponse> {
 export function me(): Promise<AuthUser> {
   return withFallback(
     async () => {
-      const { data } = await http.get<AuthUser>("/auth/me");
-      return data;
+      const { data } = await http.get<BackendMeResponse>("/auth/me");
+      return toAuthUser(data);
     },
     async () => {
       await delay(150);

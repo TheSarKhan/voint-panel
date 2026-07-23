@@ -34,7 +34,7 @@ export function createRagDocument(
       const doc: RagDocument = {
         id: `rag-${Date.now()}`,
         ...input,
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       };
       mockRagDocuments.unshift(doc);
       return doc;

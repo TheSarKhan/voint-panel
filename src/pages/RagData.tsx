@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createRagDocument, deleteRagDocument, getRagDocuments } from "../api/rag";
-import type { RagDocType, RagDocument } from "../api/types";
+import type { RagDocument } from "../api/types";
 import { IconPlus, IconTrash } from "../components/icons";
 import {
   Badge,
@@ -18,21 +18,12 @@ import {
 import { formatDateTime } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
-const typeLabels: Record<RagDocType, string> = {
-  PRICE: "Qiymətlər",
-  SERVICE: "Xidmətlər",
-  FAQ: "FAQ",
-  HOURS: "İş saatları",
-  OTHER: "Digər",
-};
-
 interface FormState {
-  type: RagDocType;
-  title: string;
+  category: string;
   content: string;
 }
 
-const emptyForm: FormState = { type: "OTHER", title: "", content: "" };
+const emptyForm: FormState = { category: "", content: "" };
 
 export function RagDataPage() {
   const tenantId = useTenantId();
@@ -62,9 +53,9 @@ export function RagDataPage() {
     setSaving(true);
     try {
       const doc = await createRagDocument(tenantId, {
-        type: form.type,
-        title: form.title.trim(),
+        category: form.category.trim(),
         content: form.content.trim(),
+        source: "panel",
       });
       setDocs((prev) => (prev ? [doc, ...prev] : [doc]));
       setAdding(false);
@@ -116,12 +107,11 @@ export function RagDataPage() {
             <Card key={doc.id} className="flex flex-col p-5">
               <div className="mb-2 flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-semibold text-fg">{doc.title}</h3>
-                  <p className="mt-0.5 text-[11px] text-fg-faint">
-                    Yenilənib: {formatDateTime(doc.updatedAt)}
+                  <Badge>{doc.category || "digər"}</Badge>
+                  <p className="mt-1 text-[11px] text-fg-faint">
+                    Yaradılıb: {formatDateTime(doc.createdAt)}
                   </p>
                 </div>
-                <Badge>{typeLabels[doc.type]}</Badge>
               </div>
               <pre className="mb-4 flex-1 whitespace-pre-wrap font-sans text-sm leading-relaxed text-fg-muted">
                 {doc.content}
@@ -144,28 +134,13 @@ export function RagDataPage() {
       {adding && (
         <Modal title="Yeni sənəd" onClose={() => setAdding(false)}>
           <form onSubmit={handleCreate} className="space-y-4">
-            <Field label="Növ">
-              <select
-                className={inputCls}
-                value={form.type}
-                onChange={(e) =>
-                  setForm({ ...form, type: e.target.value as RagDocType })
-                }
-              >
-                {Object.entries(typeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Başlıq">
+            <Field label="Kateqoriya">
               <input
                 required
                 className={inputCls}
-                placeholder="Məs.: Qiymət cədvəli"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="Məs.: pricing, working-hours, delivery, faq"
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
               />
             </Field>
             <Field label="Məzmun">

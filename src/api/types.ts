@@ -80,20 +80,20 @@ export interface Reservation {
   sourceCallId?: string;
 }
 
-export type RagDocType = "PRICE" | "SERVICE" | "FAQ" | "HOURS" | "OTHER";
-
+// Backend (com.starsoft.voint.rag) kateqoriyani sabit enum yox, sərbəst metn kimi saxlayir
+// (mes. "pricing", "working-hours", "delivery", "deposit", "terms").
 export interface RagDocument {
   id: string;
-  type: RagDocType;
-  title: string;
+  category: string;
   content: string;
-  updatedAt: string; // ISO
+  source?: string;
+  createdAt: string; // ISO
 }
 
 export interface RagDocumentInput {
-  type: RagDocType;
-  title: string;
+  category: string;
   content: string;
+  source?: string;
 }
 
 export interface AnalyticsOverview {
