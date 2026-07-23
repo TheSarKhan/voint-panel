@@ -36,103 +36,94 @@ export const mockCalls: CallDetail[] = [
   {
     id: "call-101",
     callerNumber: "+994 50 234 56 78",
-    callerName: "Aysel Məmmədova",
+    languageDetected: "az",
     startedAt: "2026-07-23T10:14:00Z",
     durationSec: 184,
-    status: "COMPLETED",
+    status: "RESOLVED",
     resolved: true,
-    topic: "Qiymət sorğusu",
     summary:
       "Müştəri diş təmizliyi qiymətini soruşdu. Agent qiymət məlumatını təqdim etdi və növbəti həftə üçün rezervasiya təklif etdi. Müştəri cümə günü saat 15:00-a yazıldı.",
-    transcript: [
-      { speaker: "agent", ts: "00:00", text: "Salam, CES Klinikasına xoş gəlmisiniz! Sizə necə kömək edə bilərəm?" },
-      { speaker: "customer", ts: "00:06", text: "Salam, diş təmizliyi neçəyədir?" },
-      { speaker: "agent", ts: "00:10", text: "Professional diş təmizliyi 60 manatdır. İstəsəniz sizin üçün vaxt ayıra bilərəm." },
-      { speaker: "customer", ts: "00:21", text: "Bəli, cümə günü mümkündürmü?" },
-      { speaker: "agent", ts: "00:25", text: "Cümə günü saat 15:00 boşdur. Adınızı və nömrənizi qeyd edirəm. Rezervasiyanız təsdiqləndi." },
-      { speaker: "customer", ts: "00:52", text: "Çox sağ olun!" },
-    ],
+    transcript:
+      "Agent: Salam, CES Klinikasına xoş gəlmisiniz! Sizə necə kömək edə bilərəm?\n" +
+      "Müştəri: Salam, diş təmizliyi neçəyədir?\n" +
+      "Agent: Professional diş təmizliyi 60 manatdır. İstəsəniz sizin üçün vaxt ayıra bilərəm.\n" +
+      "Müştəri: Bəli, cümə günü mümkündürmü?\n" +
+      "Agent: Cümə günü saat 15:00 boşdur. Adınızı və nömrənizi qeyd edirəm. Rezervasiyanız təsdiqləndi.\n" +
+      "Müştəri: Çox sağ olun!",
   },
   {
     id: "call-102",
     callerNumber: "+994 55 111 22 33",
-    callerName: "Rasim Quliyev",
+    languageDetected: "az",
     startedAt: "2026-07-23T09:02:00Z",
     durationSec: 95,
-    status: "COMPLETED",
+    status: "RESOLVED",
     resolved: true,
-    topic: "İş saatları",
     summary:
       "Müştəri klinikanın iş saatlarını soruşdu. Agent iş qrafikini bildirdi. Əlavə sual olmadı.",
-    transcript: [
-      { speaker: "agent", ts: "00:00", text: "Salam, CES Klinikasına xoş gəlmisiniz!" },
-      { speaker: "customer", ts: "00:05", text: "Şənbə günü işləyirsiniz?" },
-      { speaker: "agent", ts: "00:08", text: "Bəli, şənbə günləri 10:00-dan 14:00-a kimi işləyirik." },
-      { speaker: "customer", ts: "00:15", text: "Aydındır, təşəkkürlər." },
-    ],
+    transcript:
+      "Agent: Salam, CES Klinikasına xoş gəlmisiniz!\n" +
+      "Müştəri: Şənbə günü işləyirsiniz?\n" +
+      "Agent: Bəli, şənbə günləri 10:00-dan 14:00-a kimi işləyirik.\n" +
+      "Müştəri: Aydındır, təşəkkürlər.",
   },
   {
     id: "call-103",
     callerNumber: "+994 70 987 65 43",
+    languageDetected: "az",
     startedAt: "2026-07-22T16:40:00Z",
     durationSec: 261,
-    status: "HANDED_OFF",
+    status: "HANDOFF",
     resolved: false,
-    topic: "Şikayət",
     summary:
       "Müştəri əvvəlki müayinə ilə bağlı narazılıq bildirdi. Agent mövzunu həll edə bilmədi və zəngi operatora yönləndirdi.",
-    transcript: [
-      { speaker: "agent", ts: "00:00", text: "Salam, CES Klinikasına xoş gəlmisiniz!" },
-      { speaker: "customer", ts: "00:04", text: "Keçən həftə müayinədən sonra problem yaşadım, kiminləsə danışmaq istəyirəm." },
-      { speaker: "agent", ts: "00:12", text: "Çox üzr istəyirik. Sizi dərhal məsul əməkdaşımıza yönləndirirəm, xahiş edirəm xətdə qalın." },
-    ],
+    transcript:
+      "Agent: Salam, CES Klinikasına xoş gəlmisiniz!\n" +
+      "Müştəri: Keçən həftə müayinədən sonra problem yaşadım, kiminləsə danışmaq istəyirəm.\n" +
+      "Agent: Çox üzr istəyirik. Sizi dərhal məsul əməkdaşımıza yönləndirirəm, xahiş edirəm xətdə qalın.",
   },
   {
     id: "call-104",
     callerNumber: "+994 51 444 55 66",
-    callerName: "Nigar Əliyeva",
+    languageDetected: "az",
     startedAt: "2026-07-22T11:20:00Z",
     durationSec: 142,
-    status: "COMPLETED",
+    status: "RESOLVED",
     resolved: true,
-    topic: "Rezervasiya",
     summary:
       "Müştəri ortodont konsultasiyası üçün vaxt istədi. Agent bazar ertəsi 11:30 təklif etdi, müştəri qəbul etdi.",
-    transcript: [
-      { speaker: "agent", ts: "00:00", text: "Salam, CES Klinikasına xoş gəlmisiniz!" },
-      { speaker: "customer", ts: "00:05", text: "Ortodonta yazılmaq istəyirəm." },
-      { speaker: "agent", ts: "00:09", text: "Əlbəttə. Bazar ertəsi saat 11:30 uyğundur?" },
-      { speaker: "customer", ts: "00:16", text: "Bəli, uyğundur." },
-      { speaker: "agent", ts: "00:19", text: "Qeyd etdim. Görüşənədək!" },
-    ],
+    transcript:
+      "Agent: Salam, CES Klinikasına xoş gəlmisiniz!\n" +
+      "Müştəri: Ortodonta yazılmaq istəyirəm.\n" +
+      "Agent: Əlbəttə. Bazar ertəsi saat 11:30 uyğundur?\n" +
+      "Müştəri: Bəli, uyğundur.\n" +
+      "Agent: Qeyd etdim. Görüşənədək!",
   },
   {
     id: "call-105",
     callerNumber: "+994 77 321 09 87",
+    languageDetected: undefined,
     startedAt: "2026-07-21T14:05:00Z",
     durationSec: 0,
-    status: "MISSED",
+    status: "ONGOING",
     resolved: false,
-    topic: "Cavabsız",
-    summary: "Zəng cavablandırılmadı.",
-    transcript: [],
+    summary: null,
+    transcript: null,
   },
   {
     id: "call-106",
     callerNumber: "+994 50 234 56 78",
-    callerName: "Aysel Məmmədova",
+    languageDetected: "az",
     startedAt: "2026-07-20T13:30:00Z",
     durationSec: 118,
-    status: "COMPLETED",
+    status: "RESOLVED",
     resolved: true,
-    topic: "Ünvan sorğusu",
     summary:
       "Müştəri klinikanın ünvanını və parkinq imkanını soruşdu. Agent məlumat verdi.",
-    transcript: [
-      { speaker: "agent", ts: "00:00", text: "Salam, CES Klinikasına xoş gəlmisiniz!" },
-      { speaker: "customer", ts: "00:04", text: "Ünvanınız haradır?" },
-      { speaker: "agent", ts: "00:07", text: "Nizami küçəsi 12, Bakı. Binanın arxasında pulsuz parkinq var." },
-    ],
+    transcript:
+      "Agent: Salam, CES Klinikasına xoş gəlmisiniz!\n" +
+      "Müştəri: Ünvanınız haradır?\n" +
+      "Agent: Nizami küçəsi 12, Bakı. Binanın arxasında pulsuz parkinq var.",
   },
 ];
 
@@ -174,42 +165,36 @@ export const mockReservations: Reservation[] = [
   {
     id: "res-1",
     customerName: "Aysel Məmmədova",
-    phone: "+994 50 234 56 78",
     service: "Professional diş təmizliyi",
     requestedAt: "2026-07-23T10:16:00Z",
-    scheduledFor: "2026-07-24T15:00:00Z",
+    scheduledFor: "Cümə günü saat 15:00",
     status: "PENDING",
     sourceCallId: "call-101",
   },
   {
     id: "res-2",
     customerName: "Nigar Əliyeva",
-    phone: "+994 51 444 55 66",
     service: "Ortodont konsultasiyası",
     requestedAt: "2026-07-22T11:22:00Z",
-    scheduledFor: "2026-07-27T11:30:00Z",
+    scheduledFor: "Bazar ertəsi saat 11:30",
     status: "CONFIRMED",
     sourceCallId: "call-104",
   },
   {
     id: "res-3",
     customerName: "Kamran Hüseynov",
-    phone: "+994 55 777 88 99",
     service: "İmplant konsultasiyası",
     requestedAt: "2026-07-21T09:45:00Z",
-    scheduledFor: "2026-07-25T10:00:00Z",
-    note: "Rentgen şəklini özü ilə gətirəcək",
+    scheduledFor: "25 iyul, səhər saatları",
     status: "PENDING",
   },
   {
     id: "res-4",
     customerName: "Leyla İsayeva",
-    phone: "+994 50 666 33 22",
     service: "Diş ağardılması",
     requestedAt: "2026-07-20T17:10:00Z",
-    scheduledFor: "2026-07-22T16:00:00Z",
+    scheduledFor: "22 iyul saat 16:00",
     status: "REJECTED",
-    note: "Müştəri vaxtı ləğv etdi",
   },
 ];
 

@@ -2,11 +2,37 @@ import { delay, http, withFallback } from "./client";
 import { mockTenant } from "./mockData";
 import type { Tenant, TenantConfig } from "./types";
 
+// Backend (com.starsoft.voint.tenant.dto.TenantResponse) duz (flat) obyektdir - panelin
+// daxili Tenant tipi ise config-i ayri obyektde saxlayir. Burada map olunur.
+interface BackendTenantResponse {
+  id: string;
+  name: string;
+  phoneNumber: string | null;
+  greetingText: string | null;
+  workingHours: string | null;
+  handoffNumber: string | null;
+  languageConfig: string | null;
+  createdAt: string;
+}
+
+function toTenant(t: BackendTenantResponse): Tenant {
+  return {
+    id: t.id,
+    name: t.name,
+    config: {
+      greetingText: t.greetingText ?? "",
+      workingHours: t.workingHours ?? "",
+      handoffNumber: t.handoffNumber ?? "",
+      language: t.languageConfig ?? "",
+    },
+  };
+}
+
 export function getTenant(tenantId: string): Promise<Tenant> {
   return withFallback(
     async () => {
-      const { data } = await http.get<Tenant>(`/tenants/${tenantId}`);
-      return data;
+      const { data } = await http.get<BackendTenantResponse>(`/tenants/${tenantId}`);
+      return toTenant(data);
     },
     async () => {
       await delay();
@@ -21,11 +47,17 @@ export function updateTenantConfig(
 ): Promise<Tenant> {
   return withFallback(
     async () => {
-      const { data } = await http.put<Tenant>(
+      // TenantConfigUpdateRequest: butun saheler nullable/qismi - burada hamisini gonderirik.
+      const { data } = await http.put<BackendTenantResponse>(
         `/tenants/${tenantId}/config`,
-        config,
+        {
+          greetingText: config.greetingText,
+          workingHours: config.workingHours,
+          handoffNumber: config.handoffNumber,
+          languageConfig: config.language,
+        },
       );
-      return data;
+      return toTenant(data);
     },
     async () => {
       await delay(350);

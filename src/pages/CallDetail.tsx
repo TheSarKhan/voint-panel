@@ -42,8 +42,8 @@ export function CallDetailPage() {
       </Link>
 
       <PageHeader
-        title={call.callerName ?? call.callerNumber}
-        subtitle={`${call.callerNumber} · ${formatDateTime(call.startedAt)} · ${formatDuration(call.durationSec)}`}
+        title={call.callerNumber}
+        subtitle={`${formatDateTime(call.startedAt)} · ${formatDuration(call.durationSec)}${call.languageDetected ? ` · ${call.languageDetected}` : ""}`}
         actions={
           <Badge tone={call.resolved ? "ok" : "warn"}>
             {call.resolved ? "Həll olundu" : "Həll olunmadı"}
@@ -55,11 +55,17 @@ export function CallDetailPage() {
         {/* AI xülasə */}
         <Card className="p-6 lg:col-span-2">
           <h2 className="mb-3 text-sm font-medium text-fg">AI Xülasə</h2>
-          <p className="text-sm leading-relaxed text-fg-muted">{call.summary}</p>
+          {call.summary ? (
+            <p className="text-sm leading-relaxed text-fg-muted">{call.summary}</p>
+          ) : (
+            <p className="text-sm text-fg-faint">
+              Bu zəng üçün AI xülasə hələ mövcud deyil.
+            </p>
+          )}
           <div className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
             <div className="flex justify-between">
-              <span className="text-fg-faint">Mövzu</span>
-              <span className="text-fg-muted">{call.topic}</span>
+              <span className="text-fg-faint">Dil</span>
+              <span className="text-fg-muted">{call.languageDetected ?? "—"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-fg-faint">Müddət</span>
@@ -71,32 +77,14 @@ export function CallDetailPage() {
         {/* Transkript */}
         <Card className="p-6 lg:col-span-3">
           <h2 className="mb-4 text-sm font-medium text-fg">Transkript</h2>
-          {call.transcript.length === 0 ? (
+          {call.transcript ? (
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-muted">
+              {call.transcript}
+            </p>
+          ) : (
             <p className="text-sm text-fg-faint">
               Bu zəng üçün transkript mövcud deyil.
             </p>
-          ) : (
-            <div className="space-y-4">
-              {call.transcript.map((line, i) => (
-                <div
-                  key={i}
-                  className={`flex ${line.speaker === "agent" ? "justify-start" : "justify-end"}`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-lg px-4 py-2.5 text-sm ${
-                      line.speaker === "agent"
-                        ? "bg-surface-2 text-fg-muted"
-                        : "bg-accent/10 text-fg"
-                    }`}
-                  >
-                    <p className="mb-1 text-[11px] uppercase tracking-wide text-fg-faint">
-                      {line.speaker === "agent" ? "Agent" : "Müştəri"} · {line.ts}
-                    </p>
-                    {line.text}
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
         </Card>
       </div>

@@ -25,6 +25,16 @@ interface FormState {
 
 const emptyForm: FormState = { phone: "", name: "", note: "" };
 
+const callStatusLabels: Record<CallSummary["status"], string> = {
+  RESOLVED: "Həll olundu",
+  HANDOFF: "Operatora ötürüldü",
+  ONGOING: "Davam edir",
+};
+
+function statusLabel(status: CallSummary["status"]): string {
+  return callStatusLabels[status];
+}
+
 export function CustomersPage() {
   const tenantId = useTenantId();
   const [customers, setCustomers] = useState<Customer[] | null>(null);
@@ -181,10 +191,13 @@ export function CustomersPage() {
                       key={call.id}
                       className="rounded-md border border-border/60 px-3 py-2"
                     >
-                      <p className="text-sm text-fg">{call.topic}</p>
-                      <p className="text-xs text-fg-faint">
+                      <p className="text-sm text-fg">
                         {formatDateTime(call.startedAt)} ·{" "}
                         {formatDuration(call.durationSec)}
+                      </p>
+                      <p className="text-xs text-fg-faint">
+                        {statusLabel(call.status)}
+                        {call.languageDetected ? ` · ${call.languageDetected}` : ""}
                       </p>
                     </li>
                   ))}

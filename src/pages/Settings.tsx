@@ -12,13 +12,6 @@ import {
 import { useTenantId } from "../lib/useTenantId";
 import { useTenantStore } from "../store/tenant";
 
-const languages: { value: TenantConfig["language"]; label: string }[] = [
-  { value: "az", label: "Azərbaycan dili" },
-  { value: "en", label: "İngilis dili" },
-  { value: "ru", label: "Rus dili" },
-  { value: "tr", label: "Türk dili" },
-];
-
 export function SettingsPage() {
   const tenantId = useTenantId();
   const tenant = useTenantStore((s) => s.tenant);
@@ -101,23 +94,19 @@ export function SettingsPage() {
             />
           </Field>
 
-          <Field label="Agent dili">
-            <select
+          <Field label="Dil konfiqurasiyası">
+            {/* Backend serbest metn sutunudur (bezen sade kod - "az", bezen JSON blok -
+                {"default":"az","supported":["az","ru","en"]}) - buna gore sabit seçim
+                siyahisi evezine serbest metn saxlayiriq ki, movcud qiymeti yanlislikla
+                daraltmayaq/xarab etmeyek. */}
+            <input
               className={inputCls}
+              placeholder='az, ya da {"default":"az","supported":["az","ru","en"]}'
               value={form.language}
               onChange={(e) =>
-                setForm({
-                  ...form,
-                  language: e.target.value as TenantConfig["language"],
-                })
+                setForm({ ...form, language: e.target.value })
               }
-            >
-              {languages.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
+            />
           </Field>
 
           {message && <p className="text-sm text-ok">{message}</p>}

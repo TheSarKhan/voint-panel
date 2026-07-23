@@ -18,7 +18,10 @@ export interface TenantConfig {
   greetingText: string;
   workingHours: string;
   handoffNumber: string;
-  language: "az" | "en" | "ru" | "tr";
+  // Backend (languageConfig) sərbəst metn sutunudur - sabit enum deyil. CES seed-inde hetta
+  // sade kod deyil, JSON blok saxlanilir (mes. {"default":"az","supported":["az","ru","en"]}),
+  // buna gore panel bunu strukturlasdirilmamis metn kimi qebul edir/gonderir.
+  language: string;
 }
 
 export interface Tenant {
@@ -27,28 +30,27 @@ export interface Tenant {
   config: TenantConfig;
 }
 
-export type CallStatus = "COMPLETED" | "MISSED" | "HANDED_OFF" | "IN_PROGRESS";
-
-export interface TranscriptLine {
-  speaker: "agent" | "customer";
-  text: string;
-  ts: string; // "00:12"
-}
+// Backend (com.starsoft.voint.call.CallStatus) enum - ONGOING (zeng davam edir),
+// RESOLVED (agent tereflinden hell olundu), HANDOFF (operatora yonlendirildi).
+export type CallStatus = "ONGOING" | "RESOLVED" | "HANDOFF";
 
 export interface CallSummary {
   id: string;
   callerNumber: string;
-  callerName?: string;
+  languageDetected?: string; // backend: language_detected — evez olunmus "topic" sahesinin yerine
   startedAt: string; // ISO
   durationSec: number;
   status: CallStatus;
-  resolved: boolean;
-  topic: string;
+  resolved: boolean; // frontend-de derive olunur: status === "RESOLVED"
 }
 
+// Backend GET /calls/{callId} call_transcripts cedvelinden transkript + AI xulaseni elave edir.
+// Hazirki webhook axini her zeng ucun transkript yazmir - buna gore her iki sahe null ola biler.
+// full_transcript sade metn blokudur (strukturlasdirilmis "speaker turns" deyil), buna gore
+// panel de onu ham metn kimi gosterir, suni sekilde sethlere bolmur.
 export interface CallDetail extends CallSummary {
-  summary: string;
-  transcript: TranscriptLine[];
+  summary: string | null;
+  transcript: string | null;
 }
 
 export interface Customer {
@@ -68,14 +70,16 @@ export interface CustomerInput {
 
 export type ReservationStatus = "PENDING" | "CONFIRMED" | "REJECTED";
 
+// Backend (ReservationRequest) musterinin telefon nomresini saxlamir - reservasiya cedvelinde
+// bu sahe yoxdur, buna gore panel de uydurma qiymet gostermir.
 export interface Reservation {
   id: string;
   customerName: string;
-  phone: string;
   service: string;
-  requestedAt: string; // ISO — sorgu vaxti
-  scheduledFor: string; // ISO — rezervasiya vaxti
-  note?: string;
+  requestedAt: string; // ISO — sorgunun yaradildigi vaxt (backend: createdAt)
+  // Backend-de sərbəst metndir (VARCHAR sutun, musterinin dediyi kimi yazilir, ISO tarix deyil) -
+  // buna gore formatDateTime-a verilmir, ham metn kimi gosterilir.
+  scheduledFor: string;
   status: ReservationStatus;
   sourceCallId?: string;
 }

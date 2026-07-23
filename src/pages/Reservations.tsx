@@ -74,14 +74,11 @@ export function ReservationsPage() {
             </div>
             <p className="mt-1 text-sm text-fg-muted">{r.service}</p>
             <p className="mt-1 text-xs text-fg-faint">
-              {r.phone} · Sorğu: {formatDateTime(r.requestedAt)}
+              Sorğu: {formatDateTime(r.requestedAt)}
             </p>
-            <p className="mt-2 text-sm text-fg">
-              Vaxt: <span className="font-medium">{formatDateTime(r.scheduledFor)}</span>
-            </p>
-            {r.note && (
-              <p className="mt-2 rounded-md bg-surface-2 px-3 py-1.5 text-xs text-fg-muted">
-                {r.note}
+            {r.scheduledFor && (
+              <p className="mt-2 text-sm text-fg">
+                Vaxt: <span className="font-medium">{r.scheduledFor}</span>
               </p>
             )}
           </div>
