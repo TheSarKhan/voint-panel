@@ -69,7 +69,7 @@ export function CallsPage() {
                           to={`/calls/${call.id}`}
                           className="font-medium text-fg hover:underline"
                         >
-                          {call.callerNumber}
+                          {call.callerNumber ?? "Naməlum nömrə"}
                         </Link>
                       </td>
                       <td className="px-5 py-3 text-fg-muted">
