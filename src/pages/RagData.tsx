@@ -3,7 +3,6 @@ import { createRagDocument, deleteRagDocument, getRagDocuments } from "../api/ra
 import type { RagDocument } from "../api/types";
 import { IconPlus, IconTrash } from "../components/icons";
 import {
-  Badge,
   btnDanger,
   btnGhost,
   btnPrimary,
@@ -14,6 +13,7 @@ import {
   Modal,
   PageHeader,
   Spinner,
+  StatusText,
 } from "../components/ui";
 import { formatDateTime } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
@@ -107,7 +107,7 @@ export function RagDataPage() {
             <Card key={doc.id} className="flex flex-col p-5">
               <div className="mb-2 flex items-start justify-between gap-3">
                 <div>
-                  <Badge>{doc.category || "digər"}</Badge>
+                  <StatusText>{doc.category || "digər"}</StatusText>
                   <p className="mt-1 text-[11px] text-fg-faint">
                     Yaradılıb: {formatDateTime(doc.createdAt)}
                   </p>

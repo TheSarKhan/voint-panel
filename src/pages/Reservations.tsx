@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { getReservations, updateReservationStatus } from "../api/reservations";
 import type { Reservation, ReservationStatus } from "../api/types";
 import {
-  Badge,
   btnDanger,
   btnPrimary,
   Card,
   EmptyState,
   PageHeader,
   Spinner,
+  StatusText,
 } from "../components/ui";
 import { formatDateTime } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
@@ -70,7 +70,7 @@ export function ReservationsPage() {
           <div className="min-w-0">
             <div className="flex items-center gap-3">
               <h3 className="text-sm font-semibold text-fg">{r.customerName}</h3>
-              <Badge tone={meta.tone}>{meta.label}</Badge>
+              <StatusText tone={meta.tone}>{meta.label}</StatusText>
             </div>
             <p className="mt-1 text-sm text-fg-muted">{r.service}</p>
             <p className="mt-1 text-xs text-fg-faint">

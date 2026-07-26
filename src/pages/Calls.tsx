@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getCalls } from "../api/calls";
 import type { CallStatus, CallSummary } from "../api/types";
-import { Badge, Card, EmptyState, PageHeader, Spinner } from "../components/ui";
+import {
+  Card,
+  EmptyState,
+  PageHeader,
+  Spinner,
+  StatusText,
+} from "../components/ui";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
@@ -82,7 +88,7 @@ export function CallsPage() {
                         {formatDuration(call.durationSec)}
                       </td>
                       <td className="px-5 py-3">
-                        <Badge tone={st.tone}>{st.label}</Badge>
+                        <StatusText tone={st.tone}>{st.label}</StatusText>
                       </td>
                     </tr>
                   );

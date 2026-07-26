@@ -9,6 +9,7 @@ import { CustomersPage } from "../pages/Customers";
 import { ReservationsPage } from "../pages/Reservations";
 import { RagDataPage } from "../pages/RagData";
 import { SettingsPage } from "../pages/Settings";
+import { UiKitPage } from "../pages/UiKit";
 
 function ProtectedRoute() {
   const token = useAuthStore((s) => s.token);
@@ -33,6 +34,8 @@ export const router = createBrowserRouter([
           { path: "/reservations", element: <ReservationsPage /> },
           { path: "/rag", element: <RagDataPage /> },
           { path: "/settings", element: <SettingsPage /> },
+          // Daxili dizayn istinadi — sidebar-da gorunmur.
+          { path: "/ui", element: <UiKitPage /> },
         ],
       },
     ],

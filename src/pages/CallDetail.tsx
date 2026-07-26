@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { getCall } from "../api/calls";
 import type { CallDetail } from "../api/types";
 import { IconArrowLeft } from "../components/icons";
-import { Badge, Card, PageHeader, Spinner } from "../components/ui";
+import { Card, PageHeader, Spinner, StatusText } from "../components/ui";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
@@ -45,9 +45,9 @@ export function CallDetailPage() {
         title={call.callerNumber}
         subtitle={`${formatDateTime(call.startedAt)} · ${formatDuration(call.durationSec)}${call.languageDetected ? ` · ${call.languageDetected}` : ""}`}
         actions={
-          <Badge tone={call.resolved ? "ok" : "warn"}>
+          <StatusText tone={call.resolved ? "ok" : "warn"}>
             {call.resolved ? "Həll olundu" : "Həll olunmadı"}
-          </Badge>
+          </StatusText>
         }
       />
 
