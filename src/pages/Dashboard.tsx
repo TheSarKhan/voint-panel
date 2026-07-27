@@ -3,7 +3,12 @@ import { getAnalytics } from "../api/analytics";
 import type { AnalyticsOverview } from "../api/types";
 import { StatCard } from "../components/StatCard";
 import { Card, PageHeader, Spinner } from "../components/ui";
-import { formatDate, formatDuration, formatPercent } from "../lib/format";
+import {
+  formatDate,
+  formatDayShort,
+  formatDuration,
+  formatPercent,
+} from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
 function CallsBarChart({ data }: { data: AnalyticsOverview["callsByDay"] | undefined }) {
@@ -26,7 +31,7 @@ function CallsBarChart({ data }: { data: AnalyticsOverview["callsByDay"] | undef
               style={{ height: `${h}%` }}
               title={`${formatDate(d.date)}: ${d.count} zəng`}
             />
-            <span className="text-[11px] text-fg-faint">{formatDate(d.date)}</span>
+            <span className="text-[11px] text-fg-faint">{formatDayShort(d.date)}</span>
           </div>
         );
       })}
