@@ -36,6 +36,21 @@ async function fetchMeWithToken(accessToken: string): Promise<AuthUser> {
   return toAuthUser(data);
 }
 
+/**
+ * Bu panel bir muessiseye baglidir.
+ *
+ * Platforma admininin (SUPER_ADMIN) tenantId-si yoxdur, ona gore burada her sehife
+ * `/tenants/undefined/...` cagirar ve bos qalar. Girisde deyilmese, sebeb gorunmez olur.
+ */
+export class WrongPanelError extends Error {
+  constructor() {
+    super(
+      "Bu hesab platforma adminidir. Admin panelə daxil olun: voint-admin.sarkhan.az",
+    );
+    this.name = "WrongPanelError";
+  }
+}
+
 export function login(email: string, password: string): Promise<LoginResponse> {
   return withFallback(
     async () => {
@@ -44,6 +59,9 @@ export function login(email: string, password: string): Promise<LoginResponse> {
         password,
       });
       const user = await fetchMeWithToken(data.accessToken);
+      if (!user.tenantId) {
+        throw new WrongPanelError();
+      }
       return { token: data.accessToken, refreshToken: data.refreshToken, user };
     },
     async () => {
