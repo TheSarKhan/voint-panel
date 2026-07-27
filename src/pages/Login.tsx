@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
+import { resolveTenantBySubdomain, type PublicTenant } from "../api/publicTenant";
+import { tenantSubdomainFromHost } from "../lib/tenantHost";
 import { useAuthStore } from "../store/auth";
 import { btnPrimary, Field, inputCls } from "../components/ui";
 import { Wordmark } from "../components/Logo";
@@ -15,6 +17,21 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Bu unvan hansi muessiseye aiddir. ces.voint.az -> CES.
+  const [tenant, setTenant] = useState<PublicTenant | null>(null);
+
+  useEffect(() => {
+    const sub = tenantSubdomainFromHost();
+    if (!sub) return;
+    let cancelled = false;
+    resolveTenantBySubdomain(sub).then((t) => {
+      if (!cancelled) setTenant(t);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (token) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: FormEvent) => {
@@ -23,6 +40,16 @@ export function LoginPage() {
     setLoading(true);
     try {
       const res = await login(email.trim(), password);
+      // Bu unvan konkret bir muessiseye aiddirsa, basqa muessisenin hesabi ile
+      // buraya girmek olmaz: ces.voint.az-da klinikanin melumatlari gorunmemelidir.
+      // Backend onsuz da tenant-i JWT-den goturur, amma istifadeci hansi panelde
+      // oldugunu unvandan oxuyur — ikisi ust-uste dusmese, panel yalan danisir.
+      if (tenant && res.user.tenantId !== tenant.id) {
+        setError(
+          `Bu hesab "${tenant.name}" panelinə aid deyil. Öz panelinizin ünvanından daxil olun.`,
+        );
+        return;
+      }
       setSession(res.token, res.user, res.refreshToken);
       navigate("/", { replace: true });
     } catch (err) {
@@ -43,7 +70,9 @@ export function LoginPage() {
           <h1 className="mb-2.5">
             <Wordmark size="2.25rem" />
           </h1>
-          <p className="text-sm text-fg-muted">Biznes Paneli</p>
+          <p className="text-sm text-fg-muted">
+            {tenant ? tenant.name : "Biznes Paneli"}
+          </p>
           <p className="mt-1 text-xs text-fg-faint">AI səsli agentinizi idarə edin</p>
         </div>
 
