@@ -68,7 +68,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <h1 className="mb-2.5">
-            <Wordmark size="2.25rem" />
+            <Wordmark size="2.9rem" />
           </h1>
           <p className="text-sm text-fg-muted">
             {tenant ? tenant.name : "Biznes Paneli"}
