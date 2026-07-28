@@ -16,6 +16,7 @@ import {
 } from "../components/ui";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
+import { apiErrorText } from "../lib/apiError";
 
 interface FormState {
   phone: string;
@@ -94,8 +95,8 @@ export function CustomersPage() {
         setSelected((s) => (s?.id === updated.id ? updated : s));
       }
       setEditing(null);
-    } catch {
-      setError("Yadda saxlamaq mümkün olmadı.");
+    } catch (e) {
+      setError(apiErrorText(e, "Yadda saxlamaq mümkün olmadı."));
     } finally {
       setSaving(false);
     }

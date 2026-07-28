@@ -12,6 +12,7 @@ import {
 } from "../components/ui";
 import { formatDateTime } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
+import { apiErrorText } from "../lib/apiError";
 
 const statusMeta: Record<
   ReservationStatus,
@@ -49,8 +50,8 @@ export function ReservationsPage() {
       setReservations((prev) =>
         prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
       );
-    } catch {
-      setError("Status yenilənə bilmədi.");
+    } catch (e) {
+      setError(apiErrorText(e, "Status yenilənə bilmədi."));
     } finally {
       setBusyId(null);
     }

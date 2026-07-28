@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth";
 import { useTenantStore } from "../store/tenant";
 import {
   IconCalendar,
+  IconCheckCircle,
   IconDashboard,
   IconDatabase,
   IconLogout,
@@ -11,6 +12,7 @@ import {
   IconSettings,
   IconUsers,
 } from "./icons";
+import { pendingApprovalCount } from "../api/approvals";
 import { Wordmark } from "./Logo";
 import type { ComponentType, SVGProps } from "react";
 
@@ -26,6 +28,7 @@ const navItems: NavItem[] = [
   { to: "/customers", label: "Müştərilər", icon: IconUsers },
   { to: "/reservations", label: "Rezervasiyalar", icon: IconCalendar },
   { to: "/rag", label: "RAG Data", icon: IconDatabase },
+  { to: "/approvals", label: "Təsdiqlər", icon: IconCheckCircle },
   { to: "/settings", label: "Ayarlar", icon: IconSettings },
 ];
 
@@ -36,12 +39,34 @@ export function Layout() {
   const tenant = useTenantStore((s) => s.tenant);
   const loadTenant = useTenantStore((s) => s.loadTenant);
   const navigate = useNavigate();
+  const [pendingApprovals, setPendingApprovals] = useState(0);
 
   useEffect(() => {
     if (user?.tenantId && !tenant) {
       void loadTenant(user.tenantId);
     }
   }, [user?.tenantId, tenant, loadTenant]);
+
+  // Gozleyen sorgu sayi. Deqiqede bir yoxlanilir: bu, baxilmali bir isin var oldugunu
+  // bildirmek ucundur, canli sayğac deyil.
+  useEffect(() => {
+    if (!user?.tenantId) return;
+    const tenantId = user.tenantId;
+    let cancelled = false;
+    const check = () =>
+      pendingApprovalCount(tenantId)
+        .then((n) => {
+          if (!cancelled) setPendingApprovals(n);
+        })
+        // Icazesi olmayan istifadeci ucun 403 gelir - bu, xeta deyil, sadece gostermirik.
+        .catch(() => undefined);
+    check();
+    const timer = setInterval(check, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [user?.tenantId]);
 
   const handleLogout = () => {
     logout();
@@ -74,6 +99,13 @@ export function Layout() {
             >
               <Icon />
               {label}
+              {/* Sayğac düz rəqəmdir, nişan deyil: dizayn qaydası badge istəmir, və rəqəmin
+                  özü onsuz da lazım olan yeganə məlumatdır. */}
+              {to === "/approvals" && pendingApprovals > 0 && (
+                <span className="ml-auto tabular-nums text-xs text-fg-faint">
+                  {pendingApprovals}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

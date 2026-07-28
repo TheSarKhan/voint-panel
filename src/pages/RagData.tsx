@@ -17,6 +17,7 @@ import {
 } from "../components/ui";
 import { formatDateTime } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
+import { apiErrorText } from "../lib/apiError";
 
 interface FormState {
   category: string;
@@ -72,8 +73,8 @@ export function RagDataPage() {
     try {
       await deleteRagDocument(tenantId, id);
       setDocs((prev) => (prev ? prev.filter((d) => d.id !== id) : prev));
-    } catch {
-      setError("Sənəd silinə bilmədi.");
+    } catch (e) {
+      setError(apiErrorText(e, "Sənəd silinə bilmədi."));
     } finally {
       setDeletingId(null);
     }

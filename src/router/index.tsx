@@ -8,6 +8,7 @@ import { CallDetailPage } from "../pages/CallDetail";
 import { CustomersPage } from "../pages/Customers";
 import { ReservationsPage } from "../pages/Reservations";
 import { RagDataPage } from "../pages/RagData";
+import { ApprovalsPage } from "../pages/Approvals";
 import { SettingsPage } from "../pages/Settings";
 import { UiKitPage } from "../pages/UiKit";
 
@@ -33,6 +34,7 @@ export const router = createBrowserRouter([
           { path: "/customers", element: <CustomersPage /> },
           { path: "/reservations", element: <ReservationsPage /> },
           { path: "/rag", element: <RagDataPage /> },
+          { path: "/approvals", element: <ApprovalsPage /> },
           { path: "/settings", element: <SettingsPage /> },
           // Daxili dizayn istinadi — sidebar-da gorunmur.
           { path: "/ui", element: <UiKitPage /> },

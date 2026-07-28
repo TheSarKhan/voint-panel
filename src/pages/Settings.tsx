@@ -11,6 +11,7 @@ import {
 } from "../components/ui";
 import { useTenantId } from "../lib/useTenantId";
 import { useTenantStore } from "../store/tenant";
+import { apiErrorText } from "../lib/apiError";
 
 export function SettingsPage() {
   const tenantId = useTenantId();
@@ -42,8 +43,8 @@ export function SettingsPage() {
       const updated = await updateTenantConfig(tenantId, form);
       setTenant(updated);
       setMessage("Ayarlar yadda saxlanıldı.");
-    } catch {
-      setError("Ayarları yadda saxlamaq mümkün olmadı.");
+    } catch (e) {
+      setError(apiErrorText(e, "Ayarları yadda saxlamaq mümkün olmadı."));
     } finally {
       setSaving(false);
     }

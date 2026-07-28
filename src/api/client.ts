@@ -50,8 +50,39 @@ function forceLogout() {
   }
 }
 
+/**
+ * Təsdiq gözləyən əməliyyat.
+ *
+ * Backend 202 qaytaranda əməliyyat BAŞ VERMƏYİB — sadəcə növbəyə düşüb. HTTP-də bu uğurdur,
+ * ona görə heç nə etməsək hər ekran "silindi" deyib sətri siyahıdan çıxarardı: istifadəçi
+ * baş verməmiş bir işi görmüş sayardı, və bu, təsdiq mexanizmini olduğundan da pis edərdi
+ * (heç olmasa nə vaxt işlədiyini bilməzdin).
+ *
+ * Ona görə burada rədd edilmiş vədə çevrilir: hər ekranın onsuz da olan xəta yolu mesajı
+ * göstərir, və heç bir ekran özünü aldadılmış siyahı ilə tapmır.
+ */
+export class PendingApprovalError extends Error {
+  readonly approvalId: string;
+
+  constructor(detail: string, approvalId: string) {
+    super(detail);
+    this.name = "PendingApprovalError";
+    this.approvalId = approvalId;
+  }
+}
+
 http.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (res.status === 202 && res.data?.status === "PENDING_APPROVAL") {
+      return Promise.reject(
+        new PendingApprovalError(
+          res.data.detail ?? "Əməliyyat təsdiq gözləyir.",
+          res.data.approvalId,
+        ),
+      );
+    }
+    return res;
+  },
   async (error: AxiosError) => {
     const original = error.config as
       | (InternalAxiosRequestConfig & { _retried?: boolean })
