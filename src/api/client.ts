@@ -9,8 +9,19 @@ export const http = axios.create({
   timeout: 8000,
 });
 
-// JWT-ni her sorguya elave et
+/**
+ * JWT-ni her sorguya elave edir — AMMA sorgu oz tokenini gətiribsə ona toxunmur.
+ *
+ * Giriş anında `fetchMeWithToken` təzəcə alınmış tokeni özü ötürür; store-da isə hələ
+ * KÖHNƏ (çox vaxt vaxtı bitmiş) token oturur, çünki sessiya yalnız /auth/me uğurla
+ * cavab verəndən sonra yazılır. Bu sətir onu üstələyəndə giriş öz düzgün tokeni ilə
+ * deyil, keçən dəfənin ölü tokeni ilə gedirdi: 401, və ekranda "məlumatları yoxlayın"
+ * yazan bir mesaj — halbuki məlumatlar düz idi.
+ */
 http.interceptors.request.use((config) => {
+  if (config.headers.Authorization) {
+    return config;
+  }
   const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -92,8 +103,11 @@ http.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // /auth/* ozu 401 verirse yenilemeye cehd etmek menasizdir — dovreye dusme riski var.
-    const isAuthCall = original?.url?.includes("/auth/");
+    // Yalniz GIRIS ve YENILEME sorgulari — onlar 401 verirse yeniden yeniləmək dövrə yaradır.
+    // Əvvəl bura "/auth/" ilə başlayan hər şey düşürdü, o cümlədən /auth/me — yəni tokenin
+    // vaxtı bitdiyini bildirən ƏSAS sorğu. Nəticədə sessiya yenilənmək əvəzinə bağlanırdı.
+    const isAuthCall =
+      original?.url?.includes("/auth/login") || original?.url?.includes("/auth/refresh");
 
     if (original && !original._retried && !isAuthCall) {
       original._retried = true;

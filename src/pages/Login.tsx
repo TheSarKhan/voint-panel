@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import type { AxiosError } from "axios";
 import { Navigate, useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
 import { resolveTenantBySubdomain, type PublicTenant } from "../api/publicTenant";
@@ -6,6 +7,30 @@ import { tenantSubdomainFromHost } from "../lib/tenantHost";
 import { useAuthStore } from "../store/auth";
 import { btnPrimary, Field, inputCls } from "../components/ui";
 import { Wordmark } from "../components/Logo";
+
+/**
+ * Girişin niyə alınmadığını deyir.
+ *
+ * Əvvəl hər HTTP xətası "Məlumatları yoxlayın" olurdu — yəni doğru şifrə yazan adama
+ * şifrənin səhv olduğu deyilirdi. Səbəb server tərəfdədirsə, istifadəçinin yoxlayacağı
+ * heç nə yoxdur və onu öz məlumatlarını şübhə altına salmağa göndərmək vaxt itkisidir.
+ */
+function loginErrorText(err: unknown): string {
+  if (err instanceof Error && !("response" in err)) {
+    return err.message;
+  }
+  const status = (err as AxiosError)?.response?.status;
+  if (status === 401) {
+    return "E-poçt və ya şifrə yanlışdır.";
+  }
+  if (status === 403) {
+    return "Bu hesab bloklanıb. Müəssisənizin panel sahibi ilə əlaqə saxlayın.";
+  }
+  if (status && status >= 500) {
+    return "Server cavab vermir. Məlumatlarınız düzgündür — bir azdan yenidən yoxlayın.";
+  }
+  return "Giriş alınmadı. Bir azdan yenidən cəhd edin.";
+}
 
 export function LoginPage() {
   const token = useAuthStore((s) => s.token);
@@ -53,11 +78,7 @@ export function LoginPage() {
       setSession(res.token, res.user, res.refreshToken);
       navigate("/", { replace: true });
     } catch (err) {
-      const message =
-        err instanceof Error && !("response" in err)
-          ? err.message
-          : "Giriş alınmadı. Məlumatları yoxlayın.";
-      setError(message);
+      setError(loginErrorText(err));
     } finally {
       setLoading(false);
     }
@@ -112,10 +133,6 @@ export function LoginPage() {
           <button type="submit" disabled={loading} className={`${btnPrimary} w-full justify-center`}>
             {loading ? "Yoxlanılır…" : "Daxil ol"}
           </button>
-
-          <p className="pt-1 text-center text-xs text-fg-faint">
-            Demo giriş: admin@ces.az / voint123
-          </p>
         </form>
       </div>
     </div>
