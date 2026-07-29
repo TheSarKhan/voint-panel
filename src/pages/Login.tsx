@@ -19,12 +19,19 @@ function loginErrorText(err: unknown): string {
   if (err instanceof Error && !("response" in err)) {
     return err.message;
   }
-  const status = (err as AxiosError)?.response?.status;
+  const response = (err as AxiosError<{ detail?: string }>)?.response;
+  const status = response?.status;
+
   if (status === 401) {
     return "E-poçt və ya şifrə yanlışdır.";
   }
+  // 403-ü "hesabınız bloklanıb" kimi oxumaq olmaz: serverin öz səbəbi varsa onu deyirik,
+  // yoxdursa (məsələn CORS rədd edəndə cavab mətn olur, JSON deyil) uydurmuruq.
   if (status === 403) {
-    return "Bu hesab bloklanıb. Müəssisənizin panel sahibi ilə əlaqə saxlayın.";
+    return (
+      response?.data?.detail ??
+      "Giriş bu ünvandan qəbul edilmədi. Problem davam edərsə bizə bildirin."
+    );
   }
   if (status && status >= 500) {
     return "Server cavab vermir. Məlumatlarınız düzgündür — bir azdan yenidən yoxlayın.";
