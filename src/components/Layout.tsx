@@ -128,8 +128,12 @@ export function Layout() {
       </aside>
 
       {/* Content */}
+      {/* Tam en, soldan baslayir. Evvel mx-auto max-w-6xl idi: genis ekranda sag teref
+          bos qalirdi, zeng cedveli ise sixilib ufuqi surusurdu. Bu panel sened deyil,
+          is ekranidir — eni oxunaqliliq ucun daraltmaq burada eks netice verir.
+          voint-admin-de eyni deyisiklik artiq edilib, iki panel eyni qalir. */}
       <main className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-6xl px-8 py-8">
+        <div className="px-8 py-8">
           <Outlet />
         </div>
       </main>

@@ -57,7 +57,9 @@ export function SettingsPage() {
         subtitle="Səsli agentinizin davranış parametrləri"
       />
 
-      <Card className="max-w-2xl p-6">
+      {/* Karta en limiti qoyulmur — voint-admin-deki Ayarlar ekrani ile eyni: butun
+          daxili sehifeler soldan baslayir ve tam eni tutur. */}
+      <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           <Field label="Salamlama mətni">
             <textarea
