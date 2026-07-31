@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getCalls } from "../api/calls";
 import type { CallStatus, CallSummary } from "../api/types";
+import { StatCard } from "../components/StatCard";
 import {
   Card,
   EmptyState,
   PageHeader,
+  Pagination,
   Spinner,
   StatusText,
 } from "../components/ui";
-import { formatDateTime, formatDuration } from "../lib/format";
+import { formatDateTime, formatDuration, formatPercent } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
 const statusLabels: Record<CallStatus, { label: string; tone: "ok" | "warn" | "err" | "neutral" }> = {
@@ -18,10 +20,14 @@ const statusLabels: Record<CallStatus, { label: string; tone: "ok" | "warn" | "e
   ONGOING: { label: "Davam edir", tone: "neutral" },
 };
 
+const PAGE_SIZE = 20;
+
 export function CallsPage() {
   const tenantId = useTenantId();
+  const navigate = useNavigate();
   const [calls, setCalls] = useState<CallSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +43,34 @@ export function CallsPage() {
     };
   }, [tenantId]);
 
+  // Göstəricilər cədvəldəki EYNİ siyahıdan hesablanır, ayrıca analitika sorğusundan yox.
+  // Səbəb: analitika endpoint-i "son 30 gün"ə baxır, cədvəl isə bütün zəngləri göstərir —
+  // iki fərqli çoxluğu yan-yana qoysaq, yuxarıdakı rəqəm aşağıdakı sətirləri saymaqla
+  // uyğun gəlməzdi və heç kim hansının doğru olduğunu bilməzdi.
+  const stats = useMemo(() => {
+    if (!calls || calls.length === 0) return null;
+    const resolved = calls.filter((c) => c.status === "RESOLVED").length;
+    const handoff = calls.filter((c) => c.status === "HANDOFF").length;
+    const openQuestions = calls.reduce((sum, c) => sum + c.openQuestionCount, 0);
+    const totalDuration = calls.reduce((sum, c) => sum + c.durationSec, 0);
+    return {
+      total: calls.length,
+      resolutionRate: resolved / calls.length,
+      handoff,
+      openQuestions,
+      avgDuration: Math.round(totalDuration / calls.length),
+    };
+  }, [calls]);
+
+  const pageCount = calls ? Math.max(1, Math.ceil(calls.length / PAGE_SIZE)) : 1;
+  // Səhifə həmişə mövcud aralıqda qalır: siyahı kiçilsə (yeniləmədən sonra) 5-ci səhifədə
+  // qalmaq boş cədvəl göstərər və bu, "zənglər itdi" kimi oxunur.
+  const safePage = Math.min(page, pageCount);
+  const visible = useMemo(
+    () => (calls ?? []).slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [calls, safePage],
+  );
+
   if (error) return <p className="text-sm text-err">{error}</p>;
   if (!calls) return <Spinner />;
 
@@ -47,66 +81,104 @@ export function CallsPage() {
         subtitle="Agentin cavablandırdığı bütün zənglər"
       />
 
+      {stats && (
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Ümumi zəng"
+            value={String(stats.total)}
+            hint="Qeydə alınmış bütün zənglər"
+          />
+          <StatCard
+            label="Həll olunma faizi"
+            value={formatPercent(stats.resolutionRate)}
+            hint={`${stats.handoff} zəng operatora ötürülüb`}
+          />
+          <StatCard
+            label="Cavabsız sual"
+            value={String(stats.openQuestions)}
+            hint="Bilik bazasında bağlanmamış boşluq"
+          />
+          <StatCard
+            label="Orta müddət"
+            value={formatDuration(stats.avgDuration)}
+            hint="dəqiqə:saniyə"
+          />
+        </div>
+      )}
+
       <Card>
         {calls.length === 0 ? (
           <EmptyState message="Hələ zəng qeydə alınmayıb." />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border text-xs uppercase tracking-wide text-fg-faint">
-                  <th className="px-5 py-3 font-medium">Nömrə</th>
-                  <th className="px-5 py-3 font-medium">Dil</th>
-                  <th className="px-5 py-3 font-medium">Tarix</th>
-                  <th className="px-5 py-3 font-medium">Müddət</th>
-                  <th className="px-5 py-3 font-medium">Status</th>
-                  <th className="px-5 py-3 font-medium">Bilik bazası</th>
-                </tr>
-              </thead>
-              <tbody>
-                {calls.map((call) => {
-                  const st = statusLabels[call.status];
-                  return (
-                    <tr
-                      key={call.id}
-                      className="border-b border-border/60 last:border-0 hover:bg-surface-2/60"
-                    >
-                      <td className="px-5 py-3">
-                        <Link
-                          to={`/calls/${call.id}`}
-                          className="font-medium text-fg hover:underline"
-                        >
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs uppercase tracking-wide text-fg-faint">
+                    <th className="px-5 py-3 font-medium">Nömrə</th>
+                    <th className="px-5 py-3 font-medium">Dil</th>
+                    <th className="px-5 py-3 font-medium">Tarix</th>
+                    <th className="px-5 py-3 font-medium">Müddət</th>
+                    <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Bilik bazası</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visible.map((call) => {
+                    const st = statusLabels[call.status];
+                    return (
+                      // Bütün sətir kliklənir. Əvvəl yalnız nömrə link idi, yəni zəngi açmaq
+                      // üçün məhz o yazıya dəymək lazım gəlirdi.
+                      <tr
+                        key={call.id}
+                        onClick={() => navigate(`/calls/${call.id}`)}
+                        className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-2/60"
+                      >
+                        <td className="px-5 py-3 font-medium text-fg">
                           {call.callerNumber ?? "Naməlum nömrə"}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-3 text-fg-muted">
-                        {call.languageDetected ?? "—"}
-                      </td>
-                      <td className="px-5 py-3 text-fg-muted">
-                        {formatDateTime(call.startedAt)}
-                      </td>
-                      <td className="px-5 py-3 text-fg-muted">
-                        {formatDuration(call.durationSec)}
-                      </td>
-                      <td className="px-5 py-3">
-                        <StatusText tone={st.tone}>{st.label}</StatusText>
-                      </td>
-                      {/* Dizayn qaydasi: nisan/badge yoxdur — veziyyet duz rengli metndir. */}
-                      <td className="px-5 py-3">
-                        {call.openQuestionCount > 0 ? (
-                          <StatusText tone="warn">
-                            {call.openQuestionCount} cavabsız sual
-                          </StatusText>
-                        ) : (
-                          <span className="text-fg-faint">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="px-5 py-3 text-fg-muted">
+                          {call.languageDetected ?? "—"}
+                        </td>
+                        <td className="px-5 py-3 text-fg-muted">
+                          {formatDateTime(call.startedAt)}
+                        </td>
+                        <td className="px-5 py-3 text-fg-muted">
+                          {formatDuration(call.durationSec)}
+                        </td>
+                        <td className="px-5 py-3">
+                          <StatusText tone={st.tone}>{st.label}</StatusText>
+                        </td>
+                        {/* Dizayn qaydası: nişan/badge yoxdur — vəziyyət düz rəngli mətndir. */}
+                        <td className="px-5 py-3">
+                          {call.openQuestionCount > 0 ? (
+                            <StatusText tone="warn">
+                              {call.openQuestionCount} cavabsız sual
+                            </StatusText>
+                          ) : (
+                            <span className="text-fg-faint">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Səhifələmə brauzerdədir: backend GET /calls düz siyahı qaytarır, yəni bütün
+                zənglər onsuz da yüklənib və burada sadəcə göstərilən hissə kəsilir.
+                Siyahı minlərə çatanda həll backend-ə səhifələmə əlavə etməkdir. */}
+            {/* Pagination öz üst xəttini və boşluğunu özü çəkir — əlavə sarğı ikiqat
+                çərçivə yaradır. Bir səhifə qalanda da göstərilir: "27 zəng" sətri
+                cədvəlin altında dayanır, yəni sayğac səhifələmədən asılı deyil. */}
+            <Pagination
+              page={safePage}
+              pageCount={pageCount}
+              onChange={setPage}
+              totalLabel={`${calls.length} zəng`}
+            />
+          </>
         )}
       </Card>
     </div>
