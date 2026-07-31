@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCalls } from "../api/calls";
 import type { CallStatus, CallSummary } from "../api/types";
@@ -8,10 +8,12 @@ import {
   EmptyState,
   PageHeader,
   Pagination,
+  Select,
   Spinner,
   StatusText,
 } from "../components/ui";
 import { formatDateTime, formatDuration, formatPercent } from "../lib/format";
+import { useFitRows } from "../lib/useFitRows";
 import { useTenantId } from "../lib/useTenantId";
 
 const statusLabels: Record<CallStatus, { label: string; tone: "ok" | "warn" | "err" | "neutral" }> = {
@@ -20,7 +22,13 @@ const statusLabels: Record<CallStatus, { label: string; tone: "ok" | "warn" | "e
   ONGOING: { label: "Davam edir", tone: "neutral" },
 };
 
-const PAGE_SIZE = 20;
+/** "auto" = ekrana sığan qədər. Qalanları istifadəçi özü seçir; onda scroll gözləniləndir. */
+const SIZE_OPTIONS = [
+  { value: "auto", label: "Ekrana sığan qədər" },
+  { value: "25", label: "25 sətir" },
+  { value: "50", label: "50 sətir" },
+  { value: "100", label: "100 sətir" },
+];
 
 export function CallsPage() {
   const tenantId = useTenantId();
@@ -28,6 +36,8 @@ export function CallsPage() {
   const [calls, setCalls] = useState<CallSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [sizeChoice, setSizeChoice] = useState("auto");
+  const bodyRef = useRef<HTMLTableSectionElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,13 +72,19 @@ export function CallsPage() {
     };
   }, [calls]);
 
-  const pageCount = calls ? Math.max(1, Math.ceil(calls.length / PAGE_SIZE)) : 1;
+  // Ölçü yalnız siyahı gələndən sonra mənalıdır: boş cədvəldə tbody-nin yeri başqadır.
+  const fitRows = useFitRows(bodyRef, !!calls && calls.length > 0);
+  // Ölçü hazır olana qədər 10 sətir göstərilir — sıfır sətirlə bir kadr boş cədvəl
+  // göstərməkdənsə, az sətirlə başlayıb dəqiqləşdirmək daha az gözə çarpır.
+  const pageSize = sizeChoice === "auto" ? (fitRows ?? 10) : Number(sizeChoice);
+
+  const pageCount = calls ? Math.max(1, Math.ceil(calls.length / pageSize)) : 1;
   // Səhifə həmişə mövcud aralıqda qalır: siyahı kiçilsə (yeniləmədən sonra) 5-ci səhifədə
   // qalmaq boş cədvəl göstərər və bu, "zənglər itdi" kimi oxunur.
   const safePage = Math.min(page, pageCount);
   const visible = useMemo(
-    () => (calls ?? []).slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
-    [calls, safePage],
+    () => (calls ?? []).slice((safePage - 1) * pageSize, safePage * pageSize),
+    [calls, safePage, pageSize],
   );
 
   if (error) return <p className="text-sm text-err">{error}</p>;
@@ -123,7 +139,7 @@ export function CallsPage() {
                     <th className="px-5 py-3 font-medium">Bilik bazası</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody ref={bodyRef}>
                   {visible.map((call) => {
                     const st = statusLabels[call.status];
                     return (
@@ -172,12 +188,24 @@ export function CallsPage() {
             {/* Pagination öz üst xəttini və boşluğunu özü çəkir — əlavə sarğı ikiqat
                 çərçivə yaradır. Bir səhifə qalanda da göstərilir: "27 zəng" sətri
                 cədvəlin altında dayanır, yəni sayğac səhifələmədən asılı deyil. */}
-            <Pagination
-              page={safePage}
-              pageCount={pageCount}
-              onChange={setPage}
-              totalLabel={`${calls.length} zəng`}
-            />
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3">
+              <Select
+                containerClassName="w-48"
+                aria-label="Səhifədəki sətir sayı"
+                value={sizeChoice}
+                onChange={(e) => {
+                  setSizeChoice(e.target.value);
+                  setPage(1);
+                }}
+                options={SIZE_OPTIONS}
+              />
+              <Pagination
+                page={safePage}
+                pageCount={pageCount}
+                onChange={setPage}
+                totalLabel={`${calls.length} zəng`}
+              />
+            </div>
           </>
         )}
       </Card>

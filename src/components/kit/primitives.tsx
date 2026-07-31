@@ -767,13 +767,20 @@ export function Pagination({
   pageCount,
   onChange,
   totalLabel,
+  leading,
 }: {
   page: number;
   pageCount: number;
   onChange: (page: number) => void;
   totalLabel?: string;
+  /**
+   * Sol tərəfdə, saydan əvvəl göstərilən element — məsələn "səhifədə neçə sətir" seçimi.
+   * Nə üçün prop, çöldən sarğı yox: bu komponent artıq öz üst xəttini və doldurmasını çəkir,
+   * ona görə onu bordercli bir div-ə salmaq ikiqat xətt verir.
+   */
+  leading?: ReactNode;
 }) {
-  if (pageCount <= 1 && !totalLabel) return null;
+  if (pageCount <= 1 && !totalLabel && !leading) return null;
   const itemCls =
     "inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40";
   return (
@@ -781,7 +788,10 @@ export function Pagination({
       aria-label="Səhifələmə"
       className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3"
     >
-      <span className="text-xs text-fg-faint">{totalLabel}</span>
+      <div className="flex items-center gap-3">
+        {leading}
+        {totalLabel && <span className="text-xs text-fg-faint">{totalLabel}</span>}
+      </div>
       <div className="flex items-center gap-1">
         <button
           type="button"
