@@ -60,6 +60,7 @@ export function CallsPage() {
                   <th className="px-5 py-3 font-medium">Tarix</th>
                   <th className="px-5 py-3 font-medium">Müddət</th>
                   <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Bilik bazası</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,6 +90,16 @@ export function CallsPage() {
                       </td>
                       <td className="px-5 py-3">
                         <StatusText tone={st.tone}>{st.label}</StatusText>
+                      </td>
+                      {/* Dizayn qaydasi: nisan/badge yoxdur — veziyyet duz rengli metndir. */}
+                      <td className="px-5 py-3">
+                        {call.openQuestionCount > 0 ? (
+                          <StatusText tone="warn">
+                            {call.openQuestionCount} cavabsız sual
+                          </StatusText>
+                        ) : (
+                          <span className="text-fg-faint">—</span>
+                        )}
                       </td>
                     </tr>
                   );

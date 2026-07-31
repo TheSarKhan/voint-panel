@@ -1,6 +1,11 @@
 import { delay, http, withFallback } from "./client";
 import { mockCalls } from "./mockData";
-import type { CallDetail, CallStatus, CallSummary } from "./types";
+import type {
+  CallDetail,
+  CallStatus,
+  CallSummary,
+  UnansweredQuestion,
+} from "./types";
 
 // Backend (com.starsoft.voint.call.dto.CallResponse) sahe adlari panelin daxili
 // tiplerinden ferqlidir (durationSeconds vs durationSec) — burada map olunur.
@@ -15,11 +20,13 @@ interface BackendCallResponse {
   durationSeconds: number | null;
   startedAt: string;
   endedAt: string | null;
+  openQuestionCount: number;
 }
 
 interface BackendCallDetailResponse extends BackendCallResponse {
   fullTranscript: string | null;
   aiSummary: string | null;
+  unansweredQuestions: UnansweredQuestion[] | null;
 }
 
 function toSummary(c: BackendCallResponse): CallSummary {
@@ -31,6 +38,9 @@ function toSummary(c: BackendCallResponse): CallSummary {
     durationSec: c.durationSeconds ?? 0,
     status: c.status,
     resolved: c.status === "RESOLVED",
+    // Mock rejimde bu sahe yoxdur — 0 verilir ki, siyahi "cavabsiz sual var" deye
+    // isaretlemesin. Olmayan melumati var kimi gostermek daha pisdir.
+    openQuestionCount: c.openQuestionCount ?? 0,
   };
 }
 
@@ -59,13 +69,14 @@ export function getCall(tenantId: string, callId: string): Promise<CallDetail> {
         ...toSummary(data),
         summary: data.aiSummary,
         transcript: data.fullTranscript,
+        unansweredQuestions: data.unansweredQuestions ?? [],
       };
     },
     async () => {
       await delay();
       const call = mockCalls.find((c) => c.id === callId);
       if (!call) throw new Error("Zeng tapilmadi");
-      return call;
+      return { ...call, unansweredQuestions: [] };
     },
   );
 }

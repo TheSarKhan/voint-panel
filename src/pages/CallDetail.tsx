@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getCall } from "../api/calls";
-import type { CallDetail } from "../api/types";
+import type { CallDetail, UnansweredQuestion } from "../api/types";
 import { IconArrowLeft } from "../components/icons";
+import { UnansweredQuestions } from "../components/UnansweredQuestions";
 import { Card, PageHeader, Spinner, StatusText } from "../components/ui";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
@@ -28,6 +29,19 @@ export function CallDetailPage() {
     };
   }, [tenantId, callId]);
 
+  // Sual baglananda butun sehifeni yeniden yuklemek lazim deyil - deyisen yalniz bir setirdir.
+  const applyQuestion = (updated: UnansweredQuestion) =>
+    setCall((prev) =>
+      prev
+        ? {
+            ...prev,
+            unansweredQuestions: prev.unansweredQuestions.map((q) =>
+              q.id === updated.id ? updated : q,
+            ),
+          }
+        : prev,
+    );
+
   if (error) return <p className="text-sm text-err">{error}</p>;
   if (!call) return <Spinner />;
 
@@ -49,6 +63,12 @@ export function CallDetailPage() {
             {call.resolved ? "Həll olundu" : "Həll olunmadı"}
           </StatusText>
         }
+      />
+
+      <UnansweredQuestions
+        tenantId={tenantId}
+        questions={call.unansweredQuestions}
+        onChanged={applyQuestion}
       />
 
       <div className="grid gap-6 lg:grid-cols-5">

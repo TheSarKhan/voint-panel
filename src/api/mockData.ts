@@ -41,6 +41,8 @@ export const mockCalls: CallDetail[] = [
     durationSec: 184,
     status: "RESOLVED",
     resolved: true,
+    openQuestionCount: 0,
+    unansweredQuestions: [],
     summary:
       "Müştəri diş təmizliyi qiymətini soruşdu. Agent qiymət məlumatını təqdim etdi və növbəti həftə üçün rezervasiya təklif etdi. Müştəri cümə günü saat 15:00-a yazıldı.",
     transcript:
@@ -59,6 +61,8 @@ export const mockCalls: CallDetail[] = [
     durationSec: 95,
     status: "RESOLVED",
     resolved: true,
+    openQuestionCount: 0,
+    unansweredQuestions: [],
     summary:
       "Müştəri klinikanın iş saatlarını soruşdu. Agent iş qrafikini bildirdi. Əlavə sual olmadı.",
     transcript:
@@ -75,6 +79,8 @@ export const mockCalls: CallDetail[] = [
     durationSec: 261,
     status: "HANDOFF",
     resolved: false,
+    openQuestionCount: 0,
+    unansweredQuestions: [],
     summary:
       "Müştəri əvvəlki müayinə ilə bağlı narazılıq bildirdi. Agent mövzunu həll edə bilmədi və zəngi operatora yönləndirdi.",
     transcript:
@@ -90,6 +96,8 @@ export const mockCalls: CallDetail[] = [
     durationSec: 142,
     status: "RESOLVED",
     resolved: true,
+    openQuestionCount: 0,
+    unansweredQuestions: [],
     summary:
       "Müştəri ortodont konsultasiyası üçün vaxt istədi. Agent bazar ertəsi 11:30 təklif etdi, müştəri qəbul etdi.",
     transcript:
@@ -107,6 +115,8 @@ export const mockCalls: CallDetail[] = [
     durationSec: 0,
     status: "ONGOING",
     resolved: false,
+    openQuestionCount: 0,
+    unansweredQuestions: [],
     summary: null,
     transcript: null,
   },
@@ -118,6 +128,8 @@ export const mockCalls: CallDetail[] = [
     durationSec: 118,
     status: "RESOLVED",
     resolved: true,
+    openQuestionCount: 0,
+    unansweredQuestions: [],
     summary:
       "Müştəri klinikanın ünvanını və parkinq imkanını soruşdu. Agent məlumat verdi.",
     transcript:
