@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { AxiosError } from "axios";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate, Link } from "react-router-dom";
 import { login } from "../api/auth";
 import { resolveTenantBySubdomain, type PublicTenant } from "../api/publicTenant";
 import { tenantSubdomainFromHost } from "../lib/tenantHost";
@@ -140,6 +140,12 @@ export function LoginPage() {
           <button type="submit" disabled={loading} className={`${btnPrimary} w-full justify-center`}>
             {loading ? "Yoxlanılır…" : "Daxil ol"}
           </button>
+          <Link
+            to="/forgot-password"
+            className="block text-center text-sm text-fg-muted hover:text-fg"
+          >
+            Şifrəni unutmusunuz?
+          </Link>
         </form>
       </div>
     </div>
