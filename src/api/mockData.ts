@@ -4,7 +4,6 @@ import type {
   CallDetail,
   Customer,
   RagDocument,
-  Reservation,
   Tenant,
 } from "./types";
 
@@ -173,43 +172,6 @@ export const mockCustomers: Customer[] = [
   },
 ];
 
-export const mockReservations: Reservation[] = [
-  {
-    id: "res-1",
-    customerName: "Aysel Məmmədova",
-    service: "Professional diş təmizliyi",
-    requestedAt: "2026-07-23T10:16:00Z",
-    scheduledFor: "Cümə günü saat 15:00",
-    status: "PENDING",
-    sourceCallId: "call-101",
-  },
-  {
-    id: "res-2",
-    customerName: "Nigar Əliyeva",
-    service: "Ortodont konsultasiyası",
-    requestedAt: "2026-07-22T11:22:00Z",
-    scheduledFor: "Bazar ertəsi saat 11:30",
-    status: "CONFIRMED",
-    sourceCallId: "call-104",
-  },
-  {
-    id: "res-3",
-    customerName: "Kamran Hüseynov",
-    service: "İmplant konsultasiyası",
-    requestedAt: "2026-07-21T09:45:00Z",
-    scheduledFor: "25 iyul, səhər saatları",
-    status: "PENDING",
-  },
-  {
-    id: "res-4",
-    customerName: "Leyla İsayeva",
-    service: "Diş ağardılması",
-    requestedAt: "2026-07-20T17:10:00Z",
-    scheduledFor: "22 iyul saat 16:00",
-    status: "REJECTED",
-  },
-];
-
 export const mockRagDocuments: RagDocument[] = [
   {
     id: "rag-1",
@@ -217,6 +179,9 @@ export const mockRagDocuments: RagDocument[] = [
     content:
       "Diş təmizliyi — 60 AZN\nDiş ağardılması — 150 AZN\nPlomb — 40-80 AZN\nİmplant konsultasiyası — pulsuz",
     source: "mock",
+    active: true,
+    hitCount: 0,
+    lastUsedAt: null,
     createdAt: "2026-07-18T12:00:00Z",
   },
   {
@@ -225,6 +190,9 @@ export const mockRagDocuments: RagDocument[] = [
     content:
       "Terapevtik stomatologiya, ortodontiya, implantologiya, uşaq stomatologiyası, professional gigiyena.",
     source: "mock",
+    active: true,
+    hitCount: 0,
+    lastUsedAt: null,
     createdAt: "2026-07-18T12:05:00Z",
   },
   {
@@ -233,6 +201,9 @@ export const mockRagDocuments: RagDocument[] = [
     content:
       "S: Parkinq varmı? C: Bəli, binanın arxasında pulsuz parkinq.\nS: Sığorta qəbul edirsiniz? C: Paşa və Atəşgah sığortaları qəbul olunur.",
     source: "mock",
+    active: true,
+    hitCount: 0,
+    lastUsedAt: null,
     createdAt: "2026-07-15T09:30:00Z",
   },
   {
@@ -240,6 +211,9 @@ export const mockRagDocuments: RagDocument[] = [
     category: "working-hours",
     content: "Bazar ertəsi – Cümə: 09:00–18:00\nŞənbə: 10:00–14:00\nBazar: bağlı",
     source: "mock",
+    active: true,
+    hitCount: 0,
+    lastUsedAt: null,
     createdAt: "2026-07-10T08:00:00Z",
   },
 ];

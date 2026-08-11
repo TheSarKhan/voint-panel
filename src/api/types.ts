@@ -98,22 +98,6 @@ export interface CustomerInput {
   note?: string;
 }
 
-export type ReservationStatus = "PENDING" | "CONFIRMED" | "REJECTED";
-
-// Backend (ReservationRequest) musterinin telefon nomresini saxlamir - reservasiya cedvelinde
-// bu sahe yoxdur, buna gore panel de uydurma qiymet gostermir.
-export interface Reservation {
-  id: string;
-  customerName: string;
-  service: string;
-  requestedAt: string; // ISO — sorgunun yaradildigi vaxt (backend: createdAt)
-  // Backend-de sərbəst metndir (VARCHAR sutun, musterinin dediyi kimi yazilir, ISO tarix deyil) -
-  // buna gore formatDateTime-a verilmir, ham metn kimi gosterilir.
-  scheduledFor: string;
-  status: ReservationStatus;
-  sourceCallId?: string;
-}
-
 // Backend (com.starsoft.voint.rag) kateqoriyani sabit enum yox, sərbəst metn kimi saxlayir
 // (mes. "pricing", "working-hours", "delivery", "deposit", "terms").
 export interface RagDocument {
@@ -121,6 +105,11 @@ export interface RagDocument {
   category: string;
   content: string;
   source?: string;
+  /** false = dayandırılıb - agent bu məlumatdan istifadə etmir, amma silinməyib. */
+  active: boolean;
+  /** Bu parçanın real zənglərdə neçə dəfə agentin kontekstinə düşdüyü. */
+  hitCount: number;
+  lastUsedAt: string | null; // ISO
   createdAt: string; // ISO
 }
 
