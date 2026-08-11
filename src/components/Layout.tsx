@@ -3,13 +3,15 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth";
 import { useTenantStore } from "../store/tenant";
 import {
-  IconCalendar,
   IconCheckCircle,
+  IconCreditCard,
   IconDashboard,
   IconDatabase,
+  IconLayers,
   IconLogout,
   IconPhone,
   IconSettings,
+  IconUser,
   IconUsers,
 } from "./icons";
 import { pendingApprovalCount } from "../api/approvals";
@@ -26,9 +28,11 @@ const navItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: IconDashboard },
   { to: "/calls", label: "Zənglər", icon: IconPhone },
   { to: "/customers", label: "Müştərilər", icon: IconUsers },
-  { to: "/reservations", label: "Rezervasiyalar", icon: IconCalendar },
-  { to: "/rag", label: "RAG Data", icon: IconDatabase },
+  { to: "/rag", label: "Bilik bazası", icon: IconDatabase },
   { to: "/approvals", label: "Təsdiqlər", icon: IconCheckCircle },
+  { to: "/team", label: "Komanda", icon: IconUser },
+  { to: "/roles", label: "Rollar", icon: IconLayers },
+  { to: "/billing", label: "Hesablaşma", icon: IconCreditCard },
   { to: "/settings", label: "Ayarlar", icon: IconSettings },
 ];
 

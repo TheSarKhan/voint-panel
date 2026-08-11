@@ -8,9 +8,11 @@ import { DashboardPage } from "../pages/Dashboard";
 import { CallsPage } from "../pages/Calls";
 import { CallDetailPage } from "../pages/CallDetail";
 import { CustomersPage } from "../pages/Customers";
-import { ReservationsPage } from "../pages/Reservations";
 import { RagDataPage } from "../pages/RagData";
 import { ApprovalsPage } from "../pages/Approvals";
+import { TeamPage } from "../pages/Team";
+import { RolesPage } from "../pages/Roles";
+import { BillingPage } from "../pages/Billing";
 import { SettingsPage } from "../pages/Settings";
 import { UiKitPage } from "../pages/UiKit";
 
@@ -37,9 +39,11 @@ export const router = createBrowserRouter([
           { path: "/calls", element: <CallsPage /> },
           { path: "/calls/:callId", element: <CallDetailPage /> },
           { path: "/customers", element: <CustomersPage /> },
-          { path: "/reservations", element: <ReservationsPage /> },
           { path: "/rag", element: <RagDataPage /> },
           { path: "/approvals", element: <ApprovalsPage /> },
+          { path: "/team", element: <TeamPage /> },
+          { path: "/roles", element: <RolesPage /> },
+          { path: "/billing", element: <BillingPage /> },
           { path: "/settings", element: <SettingsPage /> },
           // Daxili dizayn istinadi — sidebar-da gorunmur.
           { path: "/ui", element: <UiKitPage /> },
