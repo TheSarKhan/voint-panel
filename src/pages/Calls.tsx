@@ -8,6 +8,7 @@ import {
   EmptyState,
   PageHeader,
   Pagination,
+  SearchInput,
   Select,
   Spinner,
   StatusText,
@@ -30,11 +31,20 @@ const SIZE_OPTIONS = [
   { value: "100", label: "100 sətir" },
 ];
 
+const STATUS_FILTER_OPTIONS = [
+  { value: "", label: "Bütün statuslar" },
+  { value: "RESOLVED", label: "Həll olundu" },
+  { value: "HANDOFF", label: "Operatora ötürüldü" },
+  { value: "ONGOING", label: "Davam edir" },
+];
+
 export function CallsPage() {
   const tenantId = useTenantId();
   const navigate = useNavigate();
   const [calls, setCalls] = useState<CallSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [sizeChoice, setSizeChoice] = useState("auto");
   const bodyRef = useRef<HTMLTableSectionElement>(null);
@@ -53,38 +63,44 @@ export function CallsPage() {
     };
   }, [tenantId]);
 
-  // Göstəricilər cədvəldəki EYNİ siyahıdan hesablanır, ayrıca analitika sorğusundan yox.
-  // Səbəb: analitika endpoint-i "son 30 gün"ə baxır, cədvəl isə bütün zəngləri göstərir —
-  // iki fərqli çoxluğu yan-yana qoysaq, yuxarıdakı rəqəm aşağıdakı sətirləri saymaqla
-  // uyğun gəlməzdi və heç kim hansının doğru olduğunu bilməzdi.
+  // Axtarış/status süzgəci tətbiq olunmuş siyahı - göstəricilər, səhifələmə və cədvəl
+  // hamısı BUNDAN hesablanır ki, süzgəc aktivkən "Ümumi zəng" də görünəni əks etdirsin.
+  const filteredCalls = useMemo(() => {
+    let list = calls ?? [];
+    if (statusFilter) list = list.filter((c) => c.status === statusFilter);
+    const q = query.trim().toLowerCase();
+    if (q) list = list.filter((c) => (c.callerNumber ?? "").toLowerCase().includes(q));
+    return list;
+  }, [calls, query, statusFilter]);
+
   const stats = useMemo(() => {
-    if (!calls || calls.length === 0) return null;
-    const resolved = calls.filter((c) => c.status === "RESOLVED").length;
-    const handoff = calls.filter((c) => c.status === "HANDOFF").length;
-    const openQuestions = calls.reduce((sum, c) => sum + c.openQuestionCount, 0);
-    const totalDuration = calls.reduce((sum, c) => sum + c.durationSec, 0);
+    if (filteredCalls.length === 0) return null;
+    const resolved = filteredCalls.filter((c) => c.status === "RESOLVED").length;
+    const handoff = filteredCalls.filter((c) => c.status === "HANDOFF").length;
+    const openQuestions = filteredCalls.reduce((sum, c) => sum + c.openQuestionCount, 0);
+    const totalDuration = filteredCalls.reduce((sum, c) => sum + c.durationSec, 0);
     return {
-      total: calls.length,
-      resolutionRate: resolved / calls.length,
+      total: filteredCalls.length,
+      resolutionRate: resolved / filteredCalls.length,
       handoff,
       openQuestions,
-      avgDuration: Math.round(totalDuration / calls.length),
+      avgDuration: Math.round(totalDuration / filteredCalls.length),
     };
-  }, [calls]);
+  }, [filteredCalls]);
 
   // Ölçü yalnız siyahı gələndən sonra mənalıdır: boş cədvəldə tbody-nin yeri başqadır.
-  const fitRows = useFitRows(bodyRef, !!calls && calls.length > 0);
+  const fitRows = useFitRows(bodyRef, filteredCalls.length > 0);
   // Ölçü hazır olana qədər 10 sətir göstərilir — sıfır sətirlə bir kadr boş cədvəl
   // göstərməkdənsə, az sətirlə başlayıb dəqiqləşdirmək daha az gözə çarpır.
   const pageSize = sizeChoice === "auto" ? (fitRows ?? 10) : Number(sizeChoice);
 
-  const pageCount = calls ? Math.max(1, Math.ceil(calls.length / pageSize)) : 1;
-  // Səhifə həmişə mövcud aralıqda qalır: siyahı kiçilsə (yeniləmədən sonra) 5-ci səhifədə
+  const pageCount = Math.max(1, Math.ceil(filteredCalls.length / pageSize));
+  // Səhifə həmişə mövcud aralıqda qalır: siyahı kiçilsə (süzgəcdən sonra) 5-ci səhifədə
   // qalmaq boş cədvəl göstərər və bu, "zənglər itdi" kimi oxunur.
   const safePage = Math.min(page, pageCount);
   const visible = useMemo(
-    () => (calls ?? []).slice((safePage - 1) * pageSize, safePage * pageSize),
-    [calls, safePage, pageSize],
+    () => filteredCalls.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [filteredCalls, safePage, pageSize],
   );
 
   if (error) return <p className="text-sm text-err">{error}</p>;
@@ -122,9 +138,35 @@ export function CallsPage() {
         </div>
       )}
 
+      {calls.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <SearchInput
+            value={query}
+            onChange={(v) => {
+              setQuery(v);
+              setPage(1);
+            }}
+            placeholder="Nömrəyə görə axtar…"
+            className="max-w-xs"
+          />
+          <Select
+            aria-label="Status"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            options={STATUS_FILTER_OPTIONS}
+            containerClassName="w-52"
+          />
+        </div>
+      )}
+
       <Card>
         {calls.length === 0 ? (
           <EmptyState message="Hələ zəng qeydə alınmayıb." />
+        ) : filteredCalls.length === 0 ? (
+          <EmptyState message="Axtarışa uyğun zəng tapılmadı." />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -203,7 +245,7 @@ export function CallsPage() {
                 page={safePage}
                 pageCount={pageCount}
                 onChange={setPage}
-                totalLabel={`${calls.length} zəng`}
+                totalLabel={`${filteredCalls.length} zəng`}
               />
             </div>
           </>

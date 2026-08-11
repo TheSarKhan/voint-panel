@@ -1005,13 +1005,16 @@ export function StatCard({
   label,
   value,
   hint,
+  onClick,
 }: {
   label: string;
   value: string;
   hint?: string;
+  /** Verilsə, kart tıklanan olur — məs. "Ümumi zəng" basılanda Zənglər səhifəsinə aparır. */
+  onClick?: () => void;
 }) {
-  return (
-    <Card className="p-5">
+  const content = (
+    <>
       <p className="text-xs font-medium uppercase tracking-wide text-fg-muted">
         {label}
       </p>
@@ -1019,6 +1022,23 @@ export function StatCard({
         {value}
       </p>
       {hint && <p className="mt-1 text-xs text-fg-faint">{hint}</p>}
-    </Card>
+    </>
+  );
+
+  if (!onClick) {
+    return <Card className="p-5">{content}</Card>;
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "block w-full rounded-lg border border-border bg-surface p-5 text-left transition-colors hover:border-border-strong hover:bg-surface-2/60",
+        focusRing,
+      )}
+    >
+      {content}
+    </button>
   );
 }

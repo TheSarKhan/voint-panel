@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { createCustomer, getCustomers, updateCustomer } from "../api/customers";
 import { getCalls } from "../api/calls";
 import type { CallSummary, Customer } from "../api/types";
@@ -38,6 +39,7 @@ function statusLabel(status: CallSummary["status"]): string {
 
 export function CustomersPage() {
   const tenantId = useTenantId();
+  const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState<Customer[] | null>(null);
   const [calls, setCalls] = useState<CallSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,12 @@ export function CustomersPage() {
         if (cancelled) return;
         setCustomers(cs);
         setCalls(cl);
+        // Zəng detalından "Müştəri kartına bax" keçidi - uyğun nömrə tapılsa avtomatik açılır.
+        const phone = searchParams.get("phone");
+        if (phone) {
+          const match = cs.find((c) => c.phone === phone);
+          if (match) setSelected(match);
+        }
       })
       .catch(() => {
         if (!cancelled) setError("Müştərilər yüklənə bilmədi.");
@@ -60,6 +68,7 @@ export function CustomersPage() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
   const openNew = () => {

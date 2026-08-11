@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getCall } from "../api/calls";
 import type { CallDetail, UnansweredQuestion } from "../api/types";
-import { IconArrowLeft } from "../components/icons";
+import { IconArrowLeft, IconUser } from "../components/icons";
 import { UnansweredQuestions } from "../components/UnansweredQuestions";
-import { Card, PageHeader, Spinner, StatusText } from "../components/ui";
+import { Button, Card, PageHeader, Spinner, StatusText } from "../components/ui";
 import { formatDateTime, formatDuration } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
 export function CallDetailPage() {
   const { callId } = useParams<{ callId: string }>();
   const tenantId = useTenantId();
+  const navigate = useNavigate();
   const [call, setCall] = useState<CallDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,9 +60,21 @@ export function CallDetailPage() {
         title={call.callerNumber}
         subtitle={`${formatDateTime(call.startedAt)} · ${formatDuration(call.durationSec)}${call.languageDetected ? ` · ${call.languageDetected}` : ""}`}
         actions={
-          <StatusText tone={call.resolved ? "ok" : "warn"}>
-            {call.resolved ? "Həll olundu" : "Həll olunmadı"}
-          </StatusText>
+          <div className="flex items-center gap-4">
+            <StatusText tone={call.resolved ? "ok" : "warn"}>
+              {call.resolved ? "Həll olundu" : "Həll olunmadı"}
+            </StatusText>
+            {call.callerNumber && (
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={IconUser}
+                onClick={() => navigate(`/customers?phone=${encodeURIComponent(call.callerNumber)}`)}
+              >
+                Müştəri kartına bax
+              </Button>
+            )}
+          </div>
         }
       />
 
