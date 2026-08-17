@@ -10,16 +10,29 @@ const MOCK_CHATS: TelegramChat[] = [
   { id: "mock-1", label: "Sahib", linkedAt: new Date().toISOString() },
 ];
 
-/** 15 dəqiqə etibarlı bir dəfəlik t.me linki - açılıb /start basılanda bu tenant-a bağlanır. */
-export function createTelegramLink(tenantId: string): Promise<string> {
+export interface TelegramLinks {
+  /** Şəxsi söhbət açır. */
+  deepLink: string;
+  /** Qrup seçim ekranı açır - bot seçilən qrupa əlavə olunur. */
+  groupDeepLink: string;
+}
+
+/**
+ * 15 dəqiqə etibarlı bir dəfəlik token - iki linkin hər ikisi eyni tokenə bağlıdır, hansı
+ * ƏVVƏL açılsa o işləyir (tək istifadəlikdir), o birini bir də açmaq "keçərsizdir" deyəcək.
+ */
+export function createTelegramLink(tenantId: string): Promise<TelegramLinks> {
   return withFallback(
     async () => {
-      const { data } = await http.post<{ deepLink: string }>(`/tenants/${tenantId}/telegram/link`);
-      return data.deepLink;
+      const { data } = await http.post<TelegramLinks>(`/tenants/${tenantId}/telegram/link`);
+      return data;
     },
     async () => {
       await delay();
-      return "https://t.me/voint_bot?start=demo";
+      return {
+        deepLink: "https://t.me/voint_bot?start=demo",
+        groupDeepLink: "https://t.me/voint_bot?startgroup=demo",
+      };
     },
   );
 }

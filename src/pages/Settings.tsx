@@ -5,6 +5,7 @@ import {
   deleteTelegramChat,
   listTelegramChats,
   type TelegramChat,
+  type TelegramLinks,
 } from "../api/telegram";
 import type { TenantConfig } from "../api/types";
 import {
@@ -148,7 +149,7 @@ export function SettingsPage() {
  */
 function TelegramSection({ tenantId }: { tenantId: string }) {
   const [chats, setChats] = useState<TelegramChat[] | null>(null);
-  const [deepLink, setDeepLink] = useState<string | null>(null);
+  const [links, setLinks] = useState<TelegramLinks | null>(null);
   const [linking, setLinking] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -174,9 +175,9 @@ function TelegramSection({ tenantId }: { tenantId: string }) {
   const link = async () => {
     setLinking(true);
     setError(null);
-    setDeepLink(null);
+    setLinks(null);
     try {
-      setDeepLink(await createTelegramLink(tenantId));
+      setLinks(await createTelegramLink(tenantId));
     } catch (e) {
       setError(apiErrorText(e, "Link alınmadı."));
     } finally {
@@ -231,20 +232,20 @@ function TelegramSection({ tenantId }: { tenantId: string }) {
         </ul>
       )}
 
-      {deepLink && (
+      {links && (
         <div className="mt-4 rounded-md border border-border bg-surface-2 p-3">
           <p className="text-sm text-fg">
-            Bu linkə keçin və Telegram-da <span className="font-medium">Start</span> düyməsini
-            basın (15 dəqiqə etibarlıdır):
+            Hansını istəyirsiniz seçin (15 dəqiqə etibarlıdır, ikisi eyni linkdir - biri
+            işləyəndə o biri artıq keçərsiz olur):
           </p>
-          <a
-            href={deepLink}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-block break-all text-sm text-accent underline"
-          >
-            {deepLink}
-          </a>
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            <a href={links.deepLink} target="_blank" rel="noreferrer" className={btnSecondary}>
+              Şəxsi söhbətə qoş
+            </a>
+            <a href={links.groupDeepLink} target="_blank" rel="noreferrer" className={btnSecondary}>
+              Qrupa əlavə et
+            </a>
+          </div>
         </div>
       )}
 
@@ -254,7 +255,7 @@ function TelegramSection({ tenantId }: { tenantId: string }) {
         <button type="button" onClick={() => void link()} disabled={linking} className={btnSecondary}>
           {linking ? "Link hazırlanır…" : "Yeni söhbət qoş"}
         </button>
-        {deepLink && (
+        {links && (
           <button type="button" onClick={() => void refresh()} disabled={refreshing} className={btnGhost}>
             {refreshing ? "Yoxlanılır…" : "Qoşulduqdan sonra yenilə"}
           </button>
