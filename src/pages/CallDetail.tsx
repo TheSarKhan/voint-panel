@@ -14,6 +14,7 @@ export function CallDetailPage() {
   const navigate = useNavigate();
   const [call, setCall] = useState<CallDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showRaw, setShowRaw] = useState(false);
 
   useEffect(() => {
     if (!callId) return;
@@ -109,8 +110,23 @@ export function CallDetailPage() {
 
         {/* Transkript */}
         <Card className="p-6 lg:col-span-3">
-          <h2 className="mb-4 text-sm font-medium text-fg">Transkript</h2>
-          {call.transcript ? (
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-medium text-fg">Transkript</h2>
+            {call.cleanedTranscript && (
+              <button
+                type="button"
+                onClick={() => setShowRaw((v) => !v)}
+                className="text-xs text-fg-faint underline decoration-dotted transition-colors hover:text-fg-muted"
+              >
+                {showRaw ? "Təmizlənmiş versiyaya keç" : "Xam (orijinal) transkriptə bax"}
+              </button>
+            )}
+          </div>
+          {call.cleanedTranscript && !showRaw ? (
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-muted">
+              {call.cleanedTranscript}
+            </p>
+          ) : call.transcript ? (
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-fg-muted">
               {call.transcript}
             </p>

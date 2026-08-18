@@ -54,6 +54,7 @@ export const mockCalls: CallDetail[] = [
       "Müştəri: Bəli, cümə günü mümkündürmü?\n" +
       "Agent: Cümə günü saat 15:00 boşdur. Adınızı və nömrənizi qeyd edirəm. Rezervasiyanız təsdiqləndi.\n" +
       "Müştəri: Çox sağ olun!",
+    cleanedTranscript: null,
   },
   {
     id: "call-102",
@@ -72,6 +73,7 @@ export const mockCalls: CallDetail[] = [
       "Müştəri: Şənbə günü işləyirsiniz?\n" +
       "Agent: Bəli, şənbə günləri 10:00-dan 14:00-a kimi işləyirik.\n" +
       "Müştəri: Aydındır, təşəkkürlər.",
+    cleanedTranscript: null,
   },
   {
     id: "call-103",
@@ -89,6 +91,7 @@ export const mockCalls: CallDetail[] = [
       "Agent: Salam, CES Klinikasına xoş gəlmisiniz!\n" +
       "Müştəri: Keçən həftə müayinədən sonra problem yaşadım, kiminləsə danışmaq istəyirəm.\n" +
       "Agent: Çox üzr istəyirik. Sizi dərhal məsul əməkdaşımıza yönləndirirəm, xahiş edirəm xətdə qalın.",
+    cleanedTranscript: null,
   },
   {
     id: "call-104",
@@ -108,6 +111,7 @@ export const mockCalls: CallDetail[] = [
       "Agent: Əlbəttə. Bazar ertəsi saat 11:30 uyğundur?\n" +
       "Müştəri: Bəli, uyğundur.\n" +
       "Agent: Qeyd etdim. Görüşənədək!",
+    cleanedTranscript: null,
   },
   {
     id: "call-105",
@@ -121,6 +125,7 @@ export const mockCalls: CallDetail[] = [
     unansweredQuestions: [],
     summary: null,
     transcript: null,
+    cleanedTranscript: null,
   },
   {
     id: "call-106",
@@ -138,6 +143,7 @@ export const mockCalls: CallDetail[] = [
       "Agent: Salam, CES Klinikasına xoş gəlmisiniz!\n" +
       "Müştəri: Ünvanınız haradır?\n" +
       "Agent: Nizami küçəsi 12, Bakı. Binanın arxasında pulsuz parkinq var.",
+    cleanedTranscript: null,
   },
 ];
 

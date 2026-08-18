@@ -25,6 +25,7 @@ interface BackendCallResponse {
 
 interface BackendCallDetailResponse extends BackendCallResponse {
   fullTranscript: string | null;
+  cleanedTranscript: string | null;
   aiSummary: string | null;
   unansweredQuestions: UnansweredQuestion[] | null;
 }
@@ -69,6 +70,7 @@ export function getCall(tenantId: string, callId: string): Promise<CallDetail> {
         ...toSummary(data),
         summary: data.aiSummary,
         transcript: data.fullTranscript,
+        cleanedTranscript: data.cleanedTranscript,
         unansweredQuestions: data.unansweredQuestions ?? [],
       };
     },

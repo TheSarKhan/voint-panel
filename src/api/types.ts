@@ -86,6 +86,8 @@ export interface DraftAnswer {
 export interface CallDetail extends CallSummary {
   summary: string | null;
   transcript: string | null;
+  /** Eyni söhbətin AI-təmizlənmiş versiyası (STT kəsişmə/səhv artefaktları çıxarılıb) - null-dursa hələ təhlil olunmayıb, panel xam transkripti göstərir. */
+  cleanedTranscript: string | null;
   unansweredQuestions: UnansweredQuestion[];
 }
 
