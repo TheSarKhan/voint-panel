@@ -13,8 +13,10 @@ import {
 import { createRagCategory, deleteRagCategory, listRagCategories, type RagCategory } from "../api/ragCategories";
 import { getQuestions } from "../api/questions";
 import type { RagDocument, UnansweredQuestion } from "../api/types";
+import { RagChatModal } from "../components/RagChatModal";
 import { UnansweredQuestions } from "../components/UnansweredQuestions";
 import {
+  IconChat,
   IconCheck,
   IconClose,
   IconDownload,
@@ -117,6 +119,7 @@ export function RagDataPage() {
   const [categoryBusy, setCategoryBusy] = useState<string | null>(null);
   const [categoryError, setCategoryError] = useState<string | null>(null);
 
+  const [chatting, setChatting] = useState(false);
   const [viewing, setViewing] = useState<RagDocument | null>(null);
   const [editing, setEditing] = useState<RagDocument | "new" | null>(null);
   const [mode, setMode] = useState<"text" | "file">("text");
@@ -488,6 +491,9 @@ export function RagDataPage() {
             <Button variant="ghost" onClick={handlePrint} icon={IconPrint}>
               Çap et
             </Button>
+            <Button variant="secondary" onClick={() => setChatting(true)} icon={IconChat}>
+              Söhbətlə doldur
+            </Button>
             <Button onClick={() => openNew()} icon={IconPlus}>
               Yeni məlumat
             </Button>
@@ -714,6 +720,18 @@ export function RagDataPage() {
             </div>
           )}
         </>
+      )}
+
+      {chatting && (
+        <RagChatModal
+          tenantId={tenantId}
+          onClose={() => setChatting(false)}
+          onSaved={(docs) => {
+            if (docs.length > 0) {
+              setDocs((prev) => (prev ? [...docs, ...prev] : docs));
+            }
+          }}
+        />
       )}
 
       {viewing && (
