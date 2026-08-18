@@ -22,6 +22,12 @@ export interface TenantConfig {
   // sade kod deyil, JSON blok saxlanilir (mes. {"default":"az","supported":["az","ru","en"]}),
   // buna gore panel bunu strukturlasdirilmamis metn kimi qebul edir/gonderir.
   language: string;
+  // Səs tanımanın (Soniox STT) bu tenant-a xas köməkçiləri - VapiAssistantProvisioner
+  // bunları hər müəssisənin öz şirkət adları/məhsulları/jarqonu ilə vergüllə ayrılmış
+  // customVocabulary siyahısına çevirir. Ümumi dilin sözləri deyil - nadir/sahəyə xas sözlər.
+  sttDomain: string;
+  sttTopic: string;
+  sttVocabulary: string;
 }
 
 export interface Tenant {

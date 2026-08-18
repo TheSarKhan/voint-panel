@@ -28,6 +28,9 @@ export const mockTenant: Tenant = {
     workingHours: "B.e–Cümə 09:00–18:00, Şənbə 10:00–14:00",
     handoffNumber: "+994 12 555 01 02",
     language: "az",
+    sttDomain: "",
+    sttTopic: "",
+    sttVocabulary: "CES, texnika icarəsi, ekskavator, buldozer",
   },
 };
 

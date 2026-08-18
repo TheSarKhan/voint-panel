@@ -12,6 +12,9 @@ interface BackendTenantResponse {
   workingHours: string | null;
   handoffNumber: string | null;
   languageConfig: string | null;
+  sttDomain: string | null;
+  sttTopic: string | null;
+  sttVocabulary: string | null;
   createdAt: string;
 }
 
@@ -24,6 +27,9 @@ function toTenant(t: BackendTenantResponse): Tenant {
       workingHours: t.workingHours ?? "",
       handoffNumber: t.handoffNumber ?? "",
       language: t.languageConfig ?? "",
+      sttDomain: t.sttDomain ?? "",
+      sttTopic: t.sttTopic ?? "",
+      sttVocabulary: t.sttVocabulary ?? "",
     },
   };
 }
@@ -55,6 +61,9 @@ export function updateTenantConfig(
           workingHours: config.workingHours,
           handoffNumber: config.handoffNumber,
           languageConfig: config.language,
+          sttDomain: config.sttDomain,
+          sttTopic: config.sttTopic,
+          sttVocabulary: config.sttVocabulary,
         },
       );
       return toTenant(data);

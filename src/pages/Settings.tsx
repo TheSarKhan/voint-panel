@@ -123,6 +123,23 @@ export function SettingsPage() {
             />
           </Field>
 
+          <Field
+            label="Səs tanıma lüğəti"
+            help="Vergüllə ayırın - şirkət adınız, məhsul/xidmət adlarınız və sahənizə xas sözlər. Adi danışıq sözlərini (bəli, xeyr və s.) əlavə etməyə ehtiyac yoxdur, onları agent onsuz da tanıyır."
+          >
+            {/* Ümumi dilin sözləri deyil - agent zəngdə eşidəndə tanımalı olduğu, öz
+                sahənizə xas sözlər. Backend bunu VapiAssistantProvisioner-də ümumi
+                Azərbaycan lüğətinin üstünə əlavə edir. */}
+            <input
+              className={inputCls}
+              placeholder="məs. CES, ekskavator, buldozer"
+              value={form.sttVocabulary}
+              onChange={(e) =>
+                setForm({ ...form, sttVocabulary: e.target.value })
+              }
+            />
+          </Field>
+
           {message && <p className="text-sm text-ok">{message}</p>}
           {error && <p className="text-sm text-err">{error}</p>}
 
