@@ -229,6 +229,9 @@ export const mockRagDocuments: RagDocument[] = [
 
 export const mockAnalytics: AnalyticsOverview = {
   totalCalls: 128,
+  resolvedCalls: 105,
+  handoffCalls: 18,
+  ongoingCalls: 5,
   resolutionRate: 0.82,
   reservationCount: 34,
   avgDurationSec: 156,
@@ -241,6 +244,7 @@ export const mockAnalytics: AnalyticsOverview = {
     { date: "2026-07-22", count: 26 },
     { date: "2026-07-23", count: 23 },
   ],
+  bucketDays: 1,
 };
 
 export const DEMO_EMAIL = "admin@ces.az";

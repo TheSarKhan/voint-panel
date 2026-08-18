@@ -129,8 +129,13 @@ export interface RagDocumentInput {
 
 export interface AnalyticsOverview {
   totalCalls: number;
+  resolvedCalls: number;
+  handoffCalls: number;
+  ongoingCalls: number;
   resolutionRate: number; // 0..1
   reservationCount: number;
   avgDurationSec: number;
   callsByDay: { date: string; count: number }[];
+  /** Hər callsByDay nöqtəsinin əhatə etdiyi gün sayı - 1 = gündəlik, 7 = həftəlik bucket. */
+  bucketDays: number;
 }
