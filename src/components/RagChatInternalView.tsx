@@ -7,6 +7,8 @@ import {
   Sparkles,
   CheckCircle2,
   BookOpen,
+  PlusCircle,
+  Check,
 } from "lucide-react";
 import { finishRagChat, sendRagChatTurn, type RagChatTurn } from "../api/ragChat";
 import { getRagDocuments } from "../api/rag";
@@ -20,42 +22,122 @@ import {
   StatusText,
 } from "./kit";
 
-function getIndustryScenarios(businessName: string, domain?: string): string[] {
+interface TopicItem {
+  id: string;
+  tag: string;
+  question: string;
+}
+
+function getIndustryTopics(businessName: string, domain?: string): TopicItem[] {
   const text = `${businessName} ${domain ?? ""}`.toLowerCase();
 
   if (text.includes("klinik") || text.includes("dental") || text.includes("stomatolog") || text.includes("tibb") || text.includes("sağlam")) {
     return [
-      "Sığorta qəbul olunurmu (Paşa Sığorta, Atəşgah, Qala)?",
-      "Kəskin diş ağrısı ilə zəng edənə təcili növbəsiz baxış varmı?",
-      "İmplantasiya və plomblara neçə il rəsmi zəmanət verilir?",
-      "Uşaq müayinəsi üçün xüsusi həkim və anesteziya şərtləri nədir?",
+      {
+        id: "insurance",
+        tag: "Sığorta qəbulu",
+        question: "Şirkətinizdə hansı sığorta şirkətləri (məs: Paşa Sığorta, Atəşgah, Qala) qəbul olunur və sığorta ilə müraciət edən xəstə hansı sənədləri gətirməlidir?",
+      },
+      {
+        id: "emergency",
+        tag: "Təcili və kəskin ağrı",
+        question: "Kəskin diş ağrısı ilə zəng edən xəstə üçün növbədənkənar və ya təcili qəbul imkanı varmı? Gecə və bayram günlərində növbətçi həkim olur?",
+      },
+      {
+        id: "warranty",
+        tag: "Zəmanət və keyfiyyət",
+        question: "İmplantasiya, qapaq (koronka) və plomblara neçə il rəsmi zəmanət verilir? Narazılıq olduqda düzəliş ödənişsiz edilir?",
+      },
+      {
+        id: "pediatric",
+        tag: "Uşaq müayinəsi",
+        question: "Uşaqlar üçün xüsusi uşaq stomatoloqu və ya anesteziya (sedasiya) xidməti mövcuddurmu? Neçə yaşdan qəbul edirsiniz?",
+      },
+      {
+        id: "installment",
+        tag: "Taksit və BirKart",
+        question: "Baha xidmətlər (məs: breket, implant) üçün BirKart, TamKart taksit və ya daxili kredit şərtləri varmı?",
+      },
     ];
   }
 
   if (text.includes("texnika") || text.includes("avto") || text.includes("kran") || text.includes("icarə") || text.includes("servis") || text.includes("ces")) {
     return [
-      "Texnikanın çatdırılması və operator xərci icarə qiymətinə daxildir?",
-      "İcarə zamanı texnika sıradan çıxarsa nə qədər müddətə dəyişdirilir?",
-      "Minimum icarə müddəti və ilkin beh (depozit) qaydası necədir?",
-      "Rayonlara və şəhərdən kənar obyektlərə göndəriş mümkündürmü?",
+      {
+        id: "logistics",
+        tag: "Çatdırılma və operator",
+        question: "Texnikanın obyektə çatdırılması və yanacaq/operator xərcləri icarə qiymətinə daxildir, yoxsa ayrıca hesablanır?",
+      },
+      {
+        id: "breakdown",
+        tag: "Nasazlıq və dəyişdirilmə",
+        question: "İcarə müddətində texnika nasaz olarsa və ya sıradan çıxarsa, nə qədər müddətə yeni texnika ilə əvəzlənir?",
+      },
+      {
+        id: "deposit",
+        tag: "Depozit və minimum icarə",
+        question: "Minimum icarə müddəti (saat/gün) və ilkin beh (depozit) qaydası necədir? Hansı sənədlər tələb olunur?",
+      },
+      {
+        id: "regions",
+        tag: "Rayonlara göndəriş",
+        question: "Bakıdan kənar rayonlara və xüsusi layihə zonalarına texnika göndərilməsi şərtləri və tarifləri necədir?",
+      },
+      {
+        id: "payment",
+        tag: "Ödəniş və ƏDV",
+        question: "Ödəniş yalnız rəsmi bank köçürməsi ilədir, yoxsa nağd ödəniş də mümkündür? Qiymətlərə ƏDV daxildir?",
+      },
     ];
   }
 
   if (text.includes("restoran") || text.includes("kafe") || text.includes("lounge") || text.includes("pub") || text.includes("catering")) {
     return [
-      "Masa bronu üçün depozit tələb olunurmu və neçə gün əvvəl edilməlidir?",
-      "Terras və ya VIP otaq üçün xüsusi minimum hesab limiti varmı?",
-      "Menyuda vegetarian, halal və ya allergiyalı şəxslər üçün seçimlər varmı?",
-      "Ad günü və korporativ tədbirlərdə tort gətirmək və ya xüsusi endirim varmı?",
+      {
+        id: "reservation",
+        tag: "Masa bronu və depozit",
+        question: "Masaların əvvəlcədən bron edilməsi üçün depozit tələb olunurmu? Neçə saat öncədən zəng edilməlidir?",
+      },
+      {
+        id: "events",
+        tag: "Banket və ad günləri",
+        question: "Ad günü və ya xüsusi tədbirlərdə kənardan tort/içki gətirməyə icazə verilirmi? Xüsusi endirim və ya servis haqqı varmı?",
+      },
+      {
+        id: "diet",
+        tag: "Halal və pəhriz menyusu",
+        question: "Menyuda halal standartı, vegetarian və ya qlüten/allergiyası olan şəxslər üçün xüsusi seçimlər varmı?",
+      },
+      {
+        id: "vip",
+        tag: "VIP kabinet və terras",
+        question: "Terras və ya VIP kabinetlər üçün minimum hesab tələbi və ya ayrıca zal xidmət haqqı varmı?",
+      },
     ];
   }
 
   // General B2B / Services
   return [
-    "Müştəri görüşə 15 dəqiqədən çox gecikərsə və ya gəlməzsə qayda necədir?",
-    "Xidmətlər üçün taksit (BirKart, TamKart) və ya hissə-hissə ödəniş varmı?",
-    "Qeyri-iş vaxtı və ya bayram günlərində təcili əlaqə nömrəsi mövcuddurmu?",
-    "Görülən xidmətə zəmanət verilirmi və şikayətlər necə araşdırılır?",
+    {
+      id: "delay",
+      tag: "Gecikmə və ləğvetmə",
+      question: "Müştəri təyin olunmuş vaxta 15 dəqiqədən çox gecikərsə və ya son anda görüşü ləğv edərsə qaydanız necədir?",
+    },
+    {
+      id: "payment",
+      tag: "Ödəniş və taksit",
+      question: "Ödəniş üçün BirKart/TamKart taksit kartları və ya hüquqi şəxslər üçün müqavilə ilə köçürmə keçərlidirmi?",
+    },
+    {
+      id: "emergency",
+      tag: "Qeyri-iş vaxtı müraciət",
+      question: "Qeyri-iş saatlarında və ya bayram günlərində təcili əlaqə saxlamaq üçün növbətçi nömrəniz mövcuddurmu?",
+    },
+    {
+      id: "warranty",
+      tag: "Zəmanət və şikayətlər",
+      question: "Təqdim olunan xidmət və ya məhsullara rəsmi zəmanət verilirmi? Narazılıq yarandıqda prosedur necədir?",
+    },
   ];
 }
 
@@ -76,8 +158,10 @@ export function RagChatInternalView({
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<RagDocument[] | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const [scenarios, setScenarios] = useState<string[]>([]);
+  const [topics, setTopics] = useState<TopicItem[]>([]);
+  const [askedTopicIds, setAskedTopicIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Initialize smart starting prompt based on existing knowledge base gaps and tenant profile
   useEffect(() => {
@@ -90,14 +174,15 @@ export function RagChatInternalView({
 
       const businessName = tenant?.name ?? "müəssisəniz";
       const domain = tenant?.config?.sttDomain;
-      const dynamicPills = getIndustryScenarios(businessName, domain);
-      setScenarios(dynamicPills);
+      const dynamicTopics = getIndustryTopics(businessName, domain);
+      setTopics(dynamicTopics);
 
       let openingMessage = "";
       if (questions.length > 0) {
-        openingMessage = `Salam! ${businessName} üçün bilik bazasını analiz etdim. Real zənglərdə müştərilərin cavab ala bilmədiyi bu sual qeydə alınıb: "${questions[0].question}". Bu situasiyaya agentin necə cavab verməsini istərdiniz?`;
+        openingMessage = `Salam! ${businessName} üçün bilik bazasını analiz etdim. Real zənglərdə müştərilərin cavab ala bilmədiyi bu vacib sual qeydə alınıb: "${questions[0].question}". Bu situasiyaya agentin necə cavab verməsini istərdiniz?`;
       } else if (docs.length > 0) {
-        openingMessage = `Salam! ${businessName} üçün mövcud bilik bazasını nəzərdən keçirdim (əsas məlumatlar artıq məlumdur). Gəlin müştərilərinizin zəngdə verə biləcəyi ən vacib fərdi situasiyaları aydınlaşdıraq: Məsələn, ${dynamicPills[0].toLowerCase()}`;
+        openingMessage = `Salam! ${businessName} üçün mövcud bilik bazasını nəzərdən keçirdim (əsas faktlar artıq məlumdur). Aşağıdakı mövzulardan birini seçə bilərsiniz və ya birbaşa biznesinizin xüsusi qaydalarını yaza bilərsiniz: Məsələn, ${dynamicTopics[0].question}`;
+        setAskedTopicIds(new Set([dynamicTopics[0].id]));
       } else {
         openingMessage = `Salam! ${businessName} üçün səsli AI agentə sahənizə uyğun məlumat öyrətməkdə sizə kömək edəcəyəm. Gəlin əsas xidmətləriniz, iş qrafikiniz, qiymət siyasətiniz və müştərilərə tətbiq olunan xüsusi qaydalardan başlayaq.`;
       }
@@ -138,8 +223,29 @@ export function RagChatInternalView({
     }
   };
 
-  const useSuggestion = (text: string) => {
-    setInput(text);
+  /**
+   * Proactively makes the AI assistant ask about the selected topic in the chat!
+   * The user's input field stays completely clean so the user can directly type their answer.
+   */
+  const handleSelectTopic = (topic: TopicItem) => {
+    if (sending || finishing) return;
+
+    const promptText = `Gəlin bu mövzunu aydınlaşdıraq: ${topic.question}`;
+
+    // Avoid duplicate assistant question back-to-back
+    if (history[history.length - 1]?.content === promptText) {
+      inputRef.current?.focus();
+      return;
+    }
+
+    setHistory((prev) => [
+      ...prev,
+      { role: "assistant", content: promptText },
+    ]);
+
+    setAskedTopicIds((prev) => new Set([...prev, topic.id]));
+    setInput("");
+    inputRef.current?.focus();
   };
 
   const handleFinish = async () => {
@@ -312,21 +418,30 @@ export function RagChatInternalView({
           )}
         </div>
 
-        {/* Dynamic Industry Scenario Suggestion Pills */}
+        {/* Dynamic Topic Prompter (Clicking makes the AI ask that topic, leaving user input clean for the answer) */}
         <div className="p-3.5 border-t border-[#e5e5e5] bg-white flex flex-wrap gap-2 items-center">
           <span className="text-[11px] font-semibold text-[#6b6b6b] flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> Sahəyə xas suallar:
+            <Sparkles className="h-3 w-3" /> Aydınlaşdırılası mövzular:
           </span>
-          {scenarios.map((sug, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => useSuggestion(sug)}
-              className="text-[11px] bg-[#fafafa] hover:bg-[#0a0a0a] hover:text-white border border-[#e5e5e5] rounded-full px-3 py-1 text-[#0a0a0a] transition-all cursor-pointer truncate max-w-xs"
-            >
-              {sug}
-            </button>
-          ))}
+          {topics.map((item) => {
+            const isAsked = askedTopicIds.has(item.id);
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleSelectTopic(item)}
+                className={`text-[11px] border rounded-full px-3 py-1 transition-all cursor-pointer flex items-center gap-1.5 ${
+                  isAsked
+                    ? "bg-[#fafafa] text-[#6b6b6b] border-[#e5e5e5]"
+                    : "bg-[#0a0a0a] text-white border-[#0a0a0a] hover:bg-[#222]"
+                }`}
+                title={item.question}
+              >
+                {isAsked ? <Check className="h-3 w-3 text-emerald-600" /> : <PlusCircle className="h-3 w-3" />}
+                <span>{item.tag}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Chat Input Bar */}
@@ -335,12 +450,13 @@ export function RagChatInternalView({
           className="p-4 border-t border-[#e5e5e5] bg-white flex items-center gap-3"
         >
           <input
+            ref={inputRef}
             type="text"
             autoFocus
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={sending || finishing || !initialized}
-            placeholder="Məsələ haqqında qaydanı və ya cavabı yazın..."
+            placeholder="Cavabınızı və ya qaydanızı daxil edin..."
             className="flex-1 h-12 rounded-2xl border border-[#e5e5e5] px-4 text-xs sm:text-sm text-[#0a0a0a] placeholder:text-[#6b6b6b] focus:border-[#0a0a0a] focus:outline-none transition-colors"
           />
 
