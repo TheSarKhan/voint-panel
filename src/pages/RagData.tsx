@@ -13,7 +13,7 @@ import {
 import { createRagCategory, deleteRagCategory, listRagCategories, type RagCategory } from "../api/ragCategories";
 import { getQuestions } from "../api/questions";
 import type { RagDocument, UnansweredQuestion } from "../api/types";
-import { RagChatModal } from "../components/RagChatModal";
+import { RagChatInternalView } from "../components/RagChatInternalView";
 import { UnansweredQuestions } from "../components/UnansweredQuestions";
 import {
   IconChat,
@@ -471,6 +471,21 @@ export function RagDataPage() {
   if (error && !docs) return <p className="text-sm text-err">{error}</p>;
   if (!docs) return <Spinner />;
 
+  if (chatting) {
+    return (
+      <RagChatInternalView
+        tenantId={tenantId}
+        onBack={() => setChatting(false)}
+        onSaved={(newDocs) => {
+          if (newDocs.length > 0) {
+            setDocs((prev) => (prev ? [...newDocs, ...prev] : newDocs));
+          }
+          setChatting(false);
+        }}
+      />
+    );
+  }
+
   const canSubmit =
     editing === "new"
       ? mode === "file"
@@ -720,18 +735,6 @@ export function RagDataPage() {
             </div>
           )}
         </>
-      )}
-
-      {chatting && (
-        <RagChatModal
-          tenantId={tenantId}
-          onClose={() => setChatting(false)}
-          onSaved={(docs) => {
-            if (docs.length > 0) {
-              setDocs((prev) => (prev ? [...docs, ...prev] : docs));
-            }
-          }}
-        />
       )}
 
       {viewing && (
