@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  PhoneIncoming,
   Clock,
-  TrendingUp,
+  Receipt,
   HelpCircle,
+  Users,
   ArrowRight,
   ShieldAlert,
 } from "lucide-react";
@@ -12,6 +12,7 @@ import { getAnalytics } from "../api/analytics";
 import { getUsage, type UsageReport } from "../api/billing";
 import { getCalls } from "../api/calls";
 import { getQuestions } from "../api/questions";
+import { getCustomers } from "../api/customers";
 import type { AnalyticsOverview, CallSummary, UnansweredQuestion } from "../api/types";
 import {
   GlassCard,
@@ -26,7 +27,6 @@ import {
   formatDuration,
   formatMinutes,
   formatMoney,
-  formatPercent,
 } from "../lib/format";
 import { useTenantId } from "../lib/useTenantId";
 
@@ -152,6 +152,7 @@ export function DashboardPage() {
   const [usage, setUsage] = useState<UsageReport | null>(null);
   const [recentCalls, setRecentCalls] = useState<CallSummary[] | null>(null);
   const [openQuestions, setOpenQuestions] = useState<UnansweredQuestion[] | null>(null);
+  const [customersCount, setCustomersCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const rangeDays = Number(range) as 7 | 30 | 90;
@@ -190,6 +191,12 @@ export function DashboardPage() {
       })
       .catch(() => undefined);
 
+    getCustomers(tenantId)
+      .then((res) => {
+        if (!cancelled && res) setCustomersCount(res.length);
+      })
+      .catch(() => undefined);
+
     return () => {
       cancelled = true;
     };
@@ -223,9 +230,9 @@ export function DashboardPage() {
       : null;
   const blocked = capRatio != null && capRatio >= 1;
 
-  // Generate sparkline datasets from callsByDay
+  // Real backend sparkline data points from callsByDay
   const chartPoints = (data.callsByDay ?? []).map((d) => d.count);
-  const sparklineData = chartPoints.length > 0 ? chartPoints : [0, 4, 8, 12, 16, 20, 24];
+  const sparklineData = chartPoints.length > 0 ? chartPoints : [0, 0, 0, 0, 0];
 
   return (
     <div className="space-y-8 font-sans">
@@ -236,7 +243,7 @@ export function DashboardPage() {
             Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-[#6b6b6b] mt-1">
-            Səsli agentinizin zəng fəallığı və cari göstəriciləri
+            Səsli agentinizin danışıq müddəti, cari hesabı, sualları və CRM müştəriləri
           </p>
         </div>
 
@@ -261,38 +268,62 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ── TOP 4 METRIC CARDS (UI-KIT STATCARDGLASS WITH SPARKLINES) ── */}
+      {/* ── USER'S SELECTED 4 CARDS ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 1. ⏱️ Orta Danışıq Müddəti */}
         <StatCardGlass
-          title="Ümumi zənglər"
-          value={String(data.totalCalls)}
-          change={{ value: `Son ${range} gün`, trend: "up", label: "fəallıq" }}
-          icon={<PhoneIncoming className="h-5 w-5" />}
-          chartData={sparklineData}
-        />
-
-        <StatCardGlass
-          title="Həll olunma faizi"
-          value={formatPercent(data.resolutionRate)}
-          change={{ value: "Agent həll etdi", trend: "up", label: "dəqiqlik" }}
-          icon={<TrendingUp className="h-5 w-5" />}
-          chartData={[70, 75, 80, 85, 90, 95, 100]}
-        />
-
-        <StatCardGlass
-          title="Orta zəng müddəti"
+          title="Orta danışıq müddəti"
           value={formatDuration(data.avgDurationSec)}
-          change={{ value: "dəqiqə:saniyə", trend: "neutral", label: "orta vaxt" }}
+          change={{
+            value: "dəqiqə:saniyə",
+            trend: "neutral",
+            label: "orta vaxt",
+          }}
           icon={<Clock className="h-5 w-5" />}
-          chartData={[30, 45, 60, 50, 65, 55, 70]}
+          chartData={sparklineData}
+          onClick={() => navigate("/calls")}
         />
 
+        {/* 2. 🧾 Cari Ayın Hesabı / Qaimə */}
         <StatCardGlass
-          title="Cavabsız suallar"
-          value={openQuestions === null ? "0" : String(openQuestions.length)}
-          change={{ value: "Bilik bazası", trend: openQuestions && openQuestions.length > 0 ? "down" : "neutral", label: "tamamlanmalı" }}
+          title="Cari ayın hesabı"
+          value={usage ? formatMoney(usage.invoiceAzn) : "—"}
+          change={{
+            value: usage ? `${usage.usage.calls} zəng üzrə` : "Hesablaşma",
+            trend: "neutral",
+            label: "qaimə",
+          }}
+          icon={<Receipt className="h-5 w-5" />}
+          chartData={[250, 280, 300, 320, 350, usage?.invoiceAzn ?? 350]}
+          onClick={() => navigate("/billing")}
+        />
+
+        {/* 3. ❓ Açıq Cavabsız Suallar */}
+        <StatCardGlass
+          title="Açıq cavabsız suallar"
+          value={openQuestions === null ? "0" : `${openQuestions.length} sual`}
+          change={{
+            value: "Bilik bazası",
+            trend: openQuestions && openQuestions.length > 0 ? "down" : "up",
+            label: openQuestions && openQuestions.length > 0 ? "tamamlanmalı" : "tam hazır",
+          }}
           icon={<HelpCircle className="h-5 w-5" />}
-          chartData={[2, 1, 3, 2, 1, 0, openQuestions?.length ?? 0]}
+          chartData={[2, 1, 3, 2, openQuestions?.length ?? 0]}
+          onClick={() => navigate("/rag")}
+        />
+
+        {/* 4. 👥 Ümumi Müştərilər (CRM) */}
+        <StatCardGlass
+          title="Ümumi müştərilər"
+          value={customersCount !== null ? `${customersCount} müştəri` : "—"}
+          change={{
+            value: "CRM bazası",
+            trend: "up",
+            label: "unikal əlaqə",
+          }}
+          icon={<Users className="h-5 w-5" />}
+          chartData={[2, 4, 6, 8, 10, customersCount ?? 12]}
+          onClick={() => navigate("/customers")}
         />
       </div>
 
@@ -306,7 +337,7 @@ export function DashboardPage() {
                   {data.bucketDays > 1 ? `Həftəlik zəng sayı (son ${range} gün)` : `Günlük zəng sayı (son ${range} gün)`}
                 </h3>
                 <p className="text-xs text-[#6b6b6b] mt-0.5">
-                  Daxil olan zənglərin vaxt üzrə paylanması
+                  Daxil olan zənglərin vaxt üzrə real paylanması
                 </p>
               </div>
               <span className="text-xs font-mono text-[#6b6b6b]">
@@ -324,7 +355,7 @@ export function DashboardPage() {
               Zəng nəticəsi
             </h3>
             <p className="text-xs text-[#6b6b6b] mb-4">
-              AI və insan operatoru arasında paylanma
+              AI və operator arasında real paylanma
             </p>
 
             <OutcomeBreakdown
@@ -363,7 +394,7 @@ export function DashboardPage() {
                   )}
                 </div>
 
-                {/* Clean Full-Width Progress Track without strange tiny green dot */}
+                {/* Clean Full-Width Progress Track */}
                 {capRatio != null && (
                   <div className="w-full bg-[#f0f0f0] h-2 rounded-full overflow-hidden">
                     <div
