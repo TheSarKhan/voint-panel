@@ -116,7 +116,7 @@ export function PermissionMatrix({
                     <TD key={a.value} className="text-center">
                       <input
                         type="checkbox"
-                        aria-label={`${r.label} · ${a.label}`}
+                        aria-label={`${r.label}, ${a.label}`}
                         checked={has(r.value, a.value)}
                         disabled={disabled}
                         onChange={() => toggle(r.value, a.value)}

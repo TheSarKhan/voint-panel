@@ -219,7 +219,7 @@ export function ApprovalsPage() {
                           ) : (
                             <span className="text-xs text-fg-faint">
                               {r.decidedByEmail ?? "—"}
-                              {r.decidedAt ? ` · ${formatDateTime(r.decidedAt)}` : ""}
+                              {r.decidedAt ? `, ${formatDateTime(r.decidedAt)}` : ""}
                             </span>
                           )}
                         </TD>

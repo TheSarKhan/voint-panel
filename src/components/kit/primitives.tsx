@@ -899,7 +899,7 @@ export function Modal({
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -920,7 +920,7 @@ export function Modal({
     if (e.shiftKey && (active === first || !panel.contains(active))) {
       e.preventDefault();
       last.focus();
-    } else if (!e.shiftKey && active === last) {
+    } else if (!e.shiftKey && (active === last || !panel.contains(active))) {
       e.preventDefault();
       first.focus();
     }
@@ -929,8 +929,10 @@ export function Modal({
   useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
-    const first = panel?.querySelector<HTMLElement>(FOCUSABLE);
-    (first ?? panel)?.focus();
+    if (panel) {
+      const first = panel.querySelector<HTMLElement>(FOCUSABLE);
+      first?.focus();
+    }
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -951,7 +953,13 @@ export function Modal({
   }, [onClose, trapFocus]);
 
   const maxW =
-    size === "sm" ? "max-w-sm" : size === "lg" ? "max-w-2xl" : "max-w-lg";
+    size === "sm"
+      ? "max-w-sm"
+      : size === "lg"
+      ? "max-w-2xl"
+      : size === "xl"
+      ? "max-w-4xl"
+      : "max-w-lg";
 
   return (
     <div

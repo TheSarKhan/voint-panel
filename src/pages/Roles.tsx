@@ -257,7 +257,7 @@ export function RolesPage() {
                       </div>
                       {g.description && <p className="mt-1.5 text-xs text-fg-muted">{g.description}</p>}
                       <p className="mt-4 text-xs text-fg-faint">
-                        {g.roles.length} rol · {userCount} istifadəçi
+                        {g.roles.length} rol, {userCount} istifadəçi
                       </p>
                     </div>
                   );
@@ -709,7 +709,7 @@ function ImportTemplateModal({
               value={templateId}
               onChange={(e) => setTemplateId(e.target.value)}
               options={templates.map((t) => ({ value: t.id, label: t.name }))}
-              help={chosen ? `${grants} icazə${chosen.description ? ` · ${chosen.description}` : ""}` : undefined}
+              help={chosen ? `${grants} icazə${chosen.description ? `, ${chosen.description}` : ""}` : undefined}
             />
           </>
         )}

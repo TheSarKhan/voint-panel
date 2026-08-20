@@ -1045,7 +1045,7 @@ export function FileUpload({
         {(accept_ || maxSizeMb) && (
           <p className="mt-2 text-xs text-fg-faint">
             {accept_ ? accept_ : ""}
-            {accept_ && maxSizeMb ? " · " : ""}
+            {accept_ && maxSizeMb ? ", " : ""}
             {maxSizeMb ? `maks. ${maxSizeMb} MB` : ""}
           </p>
         )}

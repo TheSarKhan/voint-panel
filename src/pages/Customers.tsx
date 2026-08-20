@@ -202,12 +202,11 @@ export function CustomersPage() {
                       className="rounded-md border border-border/60 px-3 py-2"
                     >
                       <p className="text-sm text-fg">
-                        {formatDateTime(call.startedAt)} ·{" "}
-                        {formatDuration(call.durationSec)}
+                        {statusLabel(call.status)}
                       </p>
                       <p className="text-xs text-fg-faint">
-                        {statusLabel(call.status)}
-                        {call.languageDetected ? ` · ${call.languageDetected}` : ""}
+                        {formatDateTime(call.startedAt)}, {formatDuration(call.durationSec)}
+                        {call.languageDetected ? `, ${call.languageDetected}` : ""}
                       </p>
                     </li>
                   ))}

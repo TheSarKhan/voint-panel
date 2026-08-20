@@ -29,6 +29,8 @@ export const router = createBrowserRouter([
   // Public: giriş etməmiş istifadəçi üçün. Şifrə sıfırlama linki e-poçtdan buraya gəlir.
   { path: "/forgot-password", element: <ForgotPasswordPage /> },
   { path: "/reset-password", element: <ResetPasswordPage /> },
+  // UI Kit birbaşa baxış üçün
+  { path: "/ui", element: <UiKitPage /> },
   {
     element: <ProtectedRoute />,
     children: [
@@ -45,8 +47,6 @@ export const router = createBrowserRouter([
           { path: "/roles", element: <RolesPage /> },
           { path: "/billing", element: <BillingPage /> },
           { path: "/settings", element: <SettingsPage /> },
-          // Daxili dizayn istinadi — sidebar-da gorunmur.
-          { path: "/ui", element: <UiKitPage /> },
         ],
       },
     ],

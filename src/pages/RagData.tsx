@@ -706,7 +706,7 @@ export function RagDataPage() {
                         <div className="mt-4 flex items-center justify-between gap-2">
                           <p className="text-[11px] text-fg-faint">
                             {formatDate(doc.createdAt)}
-                            {doc.hitCount > 0 ? ` · ${doc.hitCount} dəfə istifadə olunub` : " · istifadə olunmayıb"}
+                            {doc.hitCount > 0 ? `, ${doc.hitCount} dəfə istifadə olunub` : ", istifadə olunmayıb"}
                           </p>
                           <Button size="sm" variant="ghost" onClick={() => setViewing(doc)}>
                             Bax

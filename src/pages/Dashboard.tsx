@@ -6,7 +6,7 @@ import { getCalls } from "../api/calls";
 import { getQuestions } from "../api/questions";
 import type { AnalyticsOverview, CallSummary, UnansweredQuestion } from "../api/types";
 import { StatCard } from "../components/StatCard";
-import { Alert, Card, PageHeader, Spinner, StatusText } from "../components/ui";
+import { Alert, Card, PageHeader, StatusText } from "../components/ui";
 import {
   formatDate,
   formatDateTime,
@@ -25,7 +25,6 @@ const RANGES = [
   { value: 90, label: "90 gün" },
 ] as const;
 
-/** bucketDays > 1 (90-günlük aralıqda) hər çubuq bir həftədir - "17 iyul" əvəzinə "17 iyul həftəsi" oxunur. */
 function CallsBarChart({
   data,
   bucketDays,
@@ -66,11 +65,6 @@ function CallsBarChart({
   );
 }
 
-/**
- * Nəticə bölgüsü status kimi oxunur (Resolved=yaxşı, Handoff=diqqət tələb edir, Ongoing=
- * neytral/davam edir) - dataviz konvensiyasına görə status rəngləri (ok/warn/neytral),
- * ixtiyari kateqorial rənglər deyil.
- */
 function OutcomeBreakdown({
   resolved,
   handoff,
@@ -93,8 +87,6 @@ function OutcomeBreakdown({
 
   return (
     <div>
-      {/* Tək zolaq, 3 seqmentə bölünüb - hər seqment arasında 2px fon boşluğu (dataviz: stacked
-          fills arasında ayırıcı boşluq), rəqəmlərin daha dəqiq müqayisəsi üçün donut yox, bar. */}
       <div className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-2">
         {rows
           .filter((r) => r.value > 0)
@@ -109,12 +101,11 @@ function OutcomeBreakdown({
       <div className="mt-4 space-y-2.5">
         {rows.map((r) => (
           <div key={r.label} className="flex items-center justify-between gap-2 text-sm">
-            <span className="flex items-center gap-2 text-fg-muted">
-              <span className={`h-2 w-2 rounded-full ${r.barCls}`} />
+            <span className="text-fg-muted font-medium">
               {r.label}
             </span>
-            <span className={`font-medium ${r.textCls}`}>
-              {r.value} · {formatPercent(total > 0 ? r.value / total : 0)}
+            <span className={`font-semibold ${r.textCls}`}>
+              {r.value} <span className="font-normal opacity-80">({formatPercent(total > 0 ? r.value / total : 0)})</span>
             </span>
           </div>
         ))}
@@ -158,8 +149,6 @@ export function DashboardPage() {
     };
   }, [tenantId, range]);
 
-  // Aralıqdan asılı deyil - bunlar həmişə "cari vəziyyət"dir (bu ayın hesabı, indiki açıq
-  // suallar, son zənglər), 7/30/90 seçimi yalnız yuxarıdakı statlara/qrafikə aiddir.
   useEffect(() => {
     let cancelled = false;
     getUsage(tenantId)
@@ -167,23 +156,38 @@ export function DashboardPage() {
         if (!cancelled) setUsage(res);
       })
       .catch(() => undefined);
+
     getQuestions(tenantId, "OPEN")
       .then((res) => {
         if (!cancelled) setOpenQuestions(res);
       })
       .catch(() => undefined);
+
     getCalls(tenantId)
       .then((res) => {
         if (!cancelled) setRecentCalls(res.slice(0, 5));
       })
       .catch(() => undefined);
+
     return () => {
       cancelled = true;
     };
   }, [tenantId]);
 
   if (error) return <p className="text-sm text-err">{error}</p>;
-  if (!data) return <Spinner />;
+  if (!data) {
+    return (
+      <div className="py-12 space-y-4 animate-pulse">
+        <div className="h-8 w-48 bg-surface-2 rounded-lg" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="h-28 bg-surface rounded-2xl border border-border" />
+          <div className="h-28 bg-surface rounded-2xl border border-border" />
+          <div className="h-28 bg-surface rounded-2xl border border-border" />
+          <div className="h-28 bg-surface rounded-2xl border border-border" />
+        </div>
+      </div>
+    );
+  }
 
   const capRatio =
     usage?.plan.monthlyMinuteCap && usage.plan.capPercentUsed != null
@@ -301,7 +305,10 @@ export function DashboardPage() {
               </div>
             </>
           ) : (
-            <Spinner compact />
+            <div className="py-4 space-y-2 animate-pulse">
+              <div className="h-4 w-20 bg-surface-2 rounded" />
+              <div className="h-7 w-32 bg-surface-2 rounded" />
+            </div>
           )}
         </Card>
 
@@ -317,7 +324,10 @@ export function DashboardPage() {
             </button>
           </div>
           {recentCalls === null ? (
-            <Spinner compact />
+            <div className="py-4 space-y-3 animate-pulse">
+              <div className="h-4 w-full bg-surface-2 rounded" />
+              <div className="h-4 w-3/4 bg-surface-2 rounded" />
+            </div>
           ) : recentCalls.length === 0 ? (
             <p className="text-sm text-fg-faint">Hələ zəng yoxdur.</p>
           ) : (
@@ -355,7 +365,10 @@ export function DashboardPage() {
             </button>
           </div>
           {openQuestions === null ? (
-            <Spinner compact />
+            <div className="py-4 space-y-3 animate-pulse">
+              <div className="h-4 w-full bg-surface-2 rounded" />
+              <div className="h-4 w-3/4 bg-surface-2 rounded" />
+            </div>
           ) : openQuestions.length === 0 ? (
             <p className="text-sm text-fg-faint">Açıq sual yoxdur.</p>
           ) : (

@@ -76,18 +76,18 @@ export function ResetPasswordPage() {
                 required
                 autoComplete="new-password"
                 className={inputCls}
-                placeholder="••••••••"
+                placeholder="Şifrənizi daxil edin"
                 value={password}
-                onChange={(ev) => setPassword(ev.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </Field>
-            <Field label="Yeni şifrə (təkrar)">
+            <Field label="Şifrənin təkrarı">
               <input
                 type="password"
                 required
                 autoComplete="new-password"
                 className={inputCls}
-                placeholder="••••••••"
+                placeholder="Şifrəni təkrar daxil edin"
                 value={confirm}
                 onChange={(ev) => setConfirm(ev.target.value)}
               />

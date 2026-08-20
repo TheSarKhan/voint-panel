@@ -59,7 +59,7 @@ export function CallDetailPage() {
 
       <PageHeader
         title={call.callerNumber}
-        subtitle={`${formatDateTime(call.startedAt)} · ${formatDuration(call.durationSec)}${call.languageDetected ? ` · ${call.languageDetected}` : ""}`}
+        subtitle={`${formatDateTime(call.startedAt)}, ${formatDuration(call.durationSec)}${call.languageDetected ? `, ${call.languageDetected}` : ""}`}
         actions={
           <div className="flex items-center gap-4">
             <StatusText tone={call.resolved ? "ok" : "warn"}>

@@ -7,7 +7,6 @@ import {
   Alert,
   Button,
   Card,
-  InlineSpinner,
   Input,
   StatusText,
   Textarea,
@@ -107,7 +106,7 @@ function AnswerForm({
 
       {draft && draft.usedKnowledge.length > 0 && (
         <p className="text-xs text-fg-faint">
-          Qaralama bunlara əsaslanıb: {draft.usedKnowledge.join(" · ")}
+          Qaralama bunlara əsaslanıb: {draft.usedKnowledge.join(", ")}
         </p>
       )}
 
