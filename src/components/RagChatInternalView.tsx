@@ -9,23 +9,55 @@ import {
   BookOpen,
 } from "lucide-react";
 import { finishRagChat, sendRagChatTurn, type RagChatTurn } from "../api/ragChat";
+import { getRagDocuments } from "../api/rag";
+import { getQuestions } from "../api/questions";
 import type { RagDocument } from "../api/types";
 import { apiErrorText } from "../lib/apiError";
+import { useTenantStore } from "../store/tenant";
 import {
   GlassButton,
   GlassCard,
   StatusText,
 } from "./kit";
 
-const GREETING =
-  "Salam! Şirkətiniz haqqında məlumat toplamaqda sizə kömək edəcəyəm ki, səsli AI agentiniz müştərilərə dəqiq və professional cavab versin. Zəhmət olmasa iş saatlarınız, ünvanınız və əsas xidmətləriniz haqqında qısa məlumat verin.";
+function getIndustryScenarios(businessName: string, domain?: string): string[] {
+  const text = `${businessName} ${domain ?? ""}`.toLowerCase();
 
-const PROMPT_SUGGESTIONS = [
-  "İş saatlarımız: Həftə içi 09:00 - 18:00, Şənbə 10:00 - 15:00",
-  "Ünvanımız: Bakı ş., Nizami küç. 45 (Parkinq mövcuddur)",
-  "Ödəniş: Nağd, kartla və taksitlə (BirKart, TamKart)",
-  "Görüş və rezervasiya üçün öncədən qeydiyyat tələb olunur",
-];
+  if (text.includes("klinik") || text.includes("dental") || text.includes("stomatolog") || text.includes("tibb") || text.includes("sağlam")) {
+    return [
+      "Sığorta qəbul olunurmu (Paşa Sığorta, Atəşgah, Qala)?",
+      "Kəskin diş ağrısı ilə zəng edənə təcili növbəsiz baxış varmı?",
+      "İmplantasiya və plomblara neçə il rəsmi zəmanət verilir?",
+      "Uşaq müayinəsi üçün xüsusi həkim və anesteziya şərtləri nədir?",
+    ];
+  }
+
+  if (text.includes("texnika") || text.includes("avto") || text.includes("kran") || text.includes("icarə") || text.includes("servis") || text.includes("ces")) {
+    return [
+      "Texnikanın çatdırılması və operator xərci icarə qiymətinə daxildir?",
+      "İcarə zamanı texnika sıradan çıxarsa nə qədər müddətə dəyişdirilir?",
+      "Minimum icarə müddəti və ilkin beh (depozit) qaydası necədir?",
+      "Rayonlara və şəhərdən kənar obyektlərə göndəriş mümkündürmü?",
+    ];
+  }
+
+  if (text.includes("restoran") || text.includes("kafe") || text.includes("lounge") || text.includes("pub") || text.includes("catering")) {
+    return [
+      "Masa bronu üçün depozit tələb olunurmu və neçə gün əvvəl edilməlidir?",
+      "Terras və ya VIP otaq üçün xüsusi minimum hesab limiti varmı?",
+      "Menyuda vegetarian, halal və ya allergiyalı şəxslər üçün seçimlər varmı?",
+      "Ad günü və korporativ tədbirlərdə tort gətirmək və ya xüsusi endirim varmı?",
+    ];
+  }
+
+  // General B2B / Services
+  return [
+    "Müştəri görüşə 15 dəqiqədən çox gecikərsə və ya gəlməzsə qayda necədir?",
+    "Xidmətlər üçün taksit (BirKart, TamKart) və ya hissə-hissə ödəniş varmı?",
+    "Qeyri-iş vaxtı və ya bayram günlərində təcili əlaqə nömrəsi mövcuddurmu?",
+    "Görülən xidmətə zəmanət verilirmi və şikayətlər necə araşdırılır?",
+  ];
+}
 
 export function RagChatInternalView({
   tenantId,
@@ -36,15 +68,48 @@ export function RagChatInternalView({
   onBack: () => void;
   onSaved: (docs: RagDocument[]) => void;
 }) {
-  const [history, setHistory] = useState<RagChatTurn[]>([
-    { role: "assistant", content: GREETING },
-  ]);
+  const tenant = useTenantStore((s) => s.tenant);
+  const [history, setHistory] = useState<RagChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<RagDocument[] | null>(null);
+  const [initialized, setInitialized] = useState(false);
+  const [scenarios, setScenarios] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Initialize smart starting prompt based on existing knowledge base gaps and tenant profile
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      getRagDocuments(tenantId).catch(() => []),
+      getQuestions(tenantId, "OPEN").catch(() => []),
+    ]).then(([docs, questions]) => {
+      if (cancelled) return;
+
+      const businessName = tenant?.name ?? "müəssisəniz";
+      const domain = tenant?.config?.sttDomain;
+      const dynamicPills = getIndustryScenarios(businessName, domain);
+      setScenarios(dynamicPills);
+
+      let openingMessage = "";
+      if (questions.length > 0) {
+        openingMessage = `Salam! ${businessName} üçün bilik bazasını analiz etdim. Real zənglərdə müştərilərin cavab ala bilmədiyi bu sual qeydə alınıb: "${questions[0].question}". Bu situasiyaya agentin necə cavab verməsini istərdiniz?`;
+      } else if (docs.length > 0) {
+        openingMessage = `Salam! ${businessName} üçün mövcud bilik bazasını nəzərdən keçirdim (əsas məlumatlar artıq məlumdur). Gəlin müştərilərinizin zəngdə verə biləcəyi ən vacib fərdi situasiyaları aydınlaşdıraq: Məsələn, ${dynamicPills[0].toLowerCase()}`;
+      } else {
+        openingMessage = `Salam! ${businessName} üçün səsli AI agentə sahənizə uyğun məlumat öyrətməkdə sizə kömək edəcəyəm. Gəlin əsas xidmətləriniz, iş qrafikiniz, qiymət siyasətiniz və müştərilərə tətbiq olunan xüsusi qaydalardan başlayaq.`;
+      }
+
+      setHistory([{ role: "assistant", content: openingMessage }]);
+      setInitialized(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, tenant]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -168,10 +233,10 @@ export function RagChatInternalView({
             <span>Bilik bazasına qayıt</span>
           </button>
           <h1 className="text-2xl sm:text-3xl font-semibold text-[#0a0a0a] tracking-tight">
-            Söhbətlə Bilik Bazası Doldurma
+            Ağıllı Bilik Bazası Köməkçisi
           </h1>
           <p className="text-xs sm:text-sm text-[#6b6b6b] mt-1">
-            Köməkçi ilə təbii söhbət edərək şirkətinizin iş saatlarını, xidmətlərini və qaydalarını agentə öyrədin
+            {tenant?.name ? `${tenant.name} sahəsinə uyğun ` : ""}təkrarsız, dərin və spesifik müştəri situasiyalarını agentə öyrədin
           </p>
         </div>
 
@@ -247,12 +312,12 @@ export function RagChatInternalView({
           )}
         </div>
 
-        {/* Suggestion Pills */}
+        {/* Dynamic Industry Scenario Suggestion Pills */}
         <div className="p-3.5 border-t border-[#e5e5e5] bg-white flex flex-wrap gap-2 items-center">
           <span className="text-[11px] font-semibold text-[#6b6b6b] flex items-center gap-1">
-            <Sparkles className="h-3 w-3" /> Nümunələr:
+            <Sparkles className="h-3 w-3" /> Sahəyə xas suallar:
           </span>
-          {PROMPT_SUGGESTIONS.map((sug, idx) => (
+          {scenarios.map((sug, idx) => (
             <button
               key={idx}
               type="button"
@@ -274,15 +339,15 @@ export function RagChatInternalView({
             autoFocus
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={sending || finishing}
-            placeholder="Biznesiniz haqqında sərbəst yazın..."
+            disabled={sending || finishing || !initialized}
+            placeholder="Məsələ haqqında qaydanı və ya cavabı yazın..."
             className="flex-1 h-12 rounded-2xl border border-[#e5e5e5] px-4 text-xs sm:text-sm text-[#0a0a0a] placeholder:text-[#6b6b6b] focus:border-[#0a0a0a] focus:outline-none transition-colors"
           />
 
           <GlassButton
             type="submit"
             variant="primary"
-            disabled={!input.trim() || sending || finishing}
+            disabled={!input.trim() || sending || finishing || !initialized}
             leftIcon={<Send className="h-4 w-4" />}
           >
             Göndər
