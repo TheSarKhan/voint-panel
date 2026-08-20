@@ -1,40 +1,40 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  PhoneIncoming,
+  TrendingUp,
+  Clock,
+  HelpCircle,
+  Search,
+  ArrowRight,
+} from "lucide-react";
 import { getCalls } from "../api/calls";
 import type { CallStatus, CallSummary } from "../api/types";
-import { StatCard } from "../components/StatCard";
 import {
-  Card,
-  EmptyState,
-  PageHeader,
-  Pagination,
-  SearchInput,
-  Select,
-  Spinner,
+  StatCardGlass,
   StatusText,
-} from "../components/ui";
+  GlassTableContainer,
+  GlassTable,
+  GlassTHead,
+  GlassTH,
+  GlassTBody,
+  GlassTR,
+  GlassTD,
+  GlassButton,
+} from "../components/kit";
 import { formatDateTime, formatDuration, formatPercent } from "../lib/format";
-import { useFitRows } from "../lib/useFitRows";
 import { useTenantId } from "../lib/useTenantId";
 
-const statusLabels: Record<CallStatus, { label: string; tone: "ok" | "warn" | "err" | "neutral" }> = {
-  RESOLVED: { label: "Həll olundu", tone: "ok" },
-  HANDOFF: { label: "Operatora ötürüldü", tone: "warn" },
-  ONGOING: { label: "Davam edir", tone: "neutral" },
+const statusMap: Record<CallStatus, { label: string; variant: "ok" | "warn" | "muted" }> = {
+  RESOLVED: { label: "Həll olundu", variant: "ok" },
+  HANDOFF: { label: "Operatora yönləndirildi", variant: "warn" },
+  ONGOING: { label: "Davam edir", variant: "muted" },
 };
-
-/** "auto" = ekrana sığan qədər. Qalanları istifadəçi özü seçir; onda scroll gözləniləndir. */
-const SIZE_OPTIONS = [
-  { value: "auto", label: "Ekrana sığan qədər" },
-  { value: "25", label: "25 sətir" },
-  { value: "50", label: "50 sətir" },
-  { value: "100", label: "100 sətir" },
-];
 
 const STATUS_FILTER_OPTIONS = [
   { value: "", label: "Bütün statuslar" },
   { value: "RESOLVED", label: "Həll olundu" },
-  { value: "HANDOFF", label: "Operatora ötürüldü" },
+  { value: "HANDOFF", label: "Operatora yönləndirildi" },
   { value: "ONGOING", label: "Davam edir" },
 ];
 
@@ -46,8 +46,7 @@ export function CallsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
-  const [sizeChoice, setSizeChoice] = useState("auto");
-  const bodyRef = useRef<HTMLTableSectionElement>(null);
+  const pageSize = 15;
 
   useEffect(() => {
     let cancelled = false;
@@ -63,8 +62,6 @@ export function CallsPage() {
     };
   }, [tenantId]);
 
-  // Axtarış/status süzgəci tətbiq olunmuş siyahı - göstəricilər, səhifələmə və cədvəl
-  // hamısı BUNDAN hesablanır ki, süzgəc aktivkən "Ümumi zəng" də görünəni əks etdirsin.
   const filteredCalls = useMemo(() => {
     let list = calls ?? [];
     if (statusFilter) list = list.filter((c) => c.status === statusFilter);
@@ -88,169 +85,242 @@ export function CallsPage() {
     };
   }, [filteredCalls]);
 
-  // Ölçü yalnız siyahı gələndən sonra mənalıdır: boş cədvəldə tbody-nin yeri başqadır.
-  const fitRows = useFitRows(bodyRef, filteredCalls.length > 0);
-  // Ölçü hazır olana qədər 10 sətir göstərilir — sıfır sətirlə bir kadr boş cədvəl
-  // göstərməkdənsə, az sətirlə başlayıb dəqiqləşdirmək daha az gözə çarpır.
-  const pageSize = sizeChoice === "auto" ? (fitRows ?? 10) : Number(sizeChoice);
-
   const pageCount = Math.max(1, Math.ceil(filteredCalls.length / pageSize));
-  // Səhifə həmişə mövcud aralıqda qalır: siyahı kiçilsə (süzgəcdən sonra) 5-ci səhifədə
-  // qalmaq boş cədvəl göstərər və bu, "zənglər itdi" kimi oxunur.
   const safePage = Math.min(page, pageCount);
   const visible = useMemo(
     () => filteredCalls.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [filteredCalls, safePage, pageSize],
+    [filteredCalls, safePage, pageSize]
   );
 
-  if (error) return <p className="text-sm text-err">{error}</p>;
-  if (!calls) return <Spinner />;
+  if (error) {
+    return (
+      <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-600 font-medium">
+        {error}
+      </div>
+    );
+  }
+
+  if (!calls) {
+    return (
+      <div className="py-8 space-y-6 animate-pulse">
+        <div className="h-8 w-48 bg-[#f5f5f5] rounded-xl" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="h-32 bg-[#fafafa] rounded-3xl border border-[#e5e5e5]" />
+          <div className="h-32 bg-[#fafafa] rounded-3xl border border-[#e5e5e5]" />
+          <div className="h-32 bg-[#fafafa] rounded-3xl border border-[#e5e5e5]" />
+          <div className="h-32 bg-[#fafafa] rounded-3xl border border-[#e5e5e5]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <PageHeader
-        title="Zənglər"
-        subtitle="Agentin cavablandırdığı bütün zənglər"
-      />
+    <div className="space-y-8 font-sans">
+      {/* ── HEADER ── */}
+      <div className="border-b border-[#e5e5e5] pb-6">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-[#0a0a0a] tracking-tight">
+          Zənglər Tarixçəsi
+        </h1>
+        <p className="text-xs sm:text-sm text-[#6b6b6b] mt-1">
+          Səsli süni intellekt köməkçisinin qəbul etdiyi bütün zənglər və audio qeydlər
+        </p>
+      </div>
 
+      {/* ── METRIC STATS ── */}
       {stats && (
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Ümumi zəng"
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCardGlass
+            title="Ümumi zənglər"
             value={String(stats.total)}
-            hint="Qeydə alınmış bütün zənglər"
+            change={{ value: "Siyahıdakı zənglər", trend: "up", label: "qeydə alındı" }}
+            icon={<PhoneIncoming className="h-5 w-5" />}
+            chartData={[10, 15, 20, 25, 30, 35, stats.total]}
           />
-          <StatCard
-            label="Həll olunma faizi"
+
+          <StatCardGlass
+            title="Həll olunma faizi"
             value={formatPercent(stats.resolutionRate)}
-            hint={`${stats.handoff} zəng operatora ötürülüb`}
+            change={{ value: `${stats.handoff} insana yönləndi`, trend: "up", label: "dəqiqlik" }}
+            icon={<TrendingUp className="h-5 w-5" />}
+            chartData={[75, 80, 85, 90, 92, 95, Math.round(stats.resolutionRate * 100)]}
           />
-          <StatCard
-            label="Cavabsız sual"
-            value={String(stats.openQuestions)}
-            hint="Bilik bazasında bağlanmamış boşluq"
-          />
-          <StatCard
-            label="Orta müddət"
+
+          <StatCardGlass
+            title="Orta müddət"
             value={formatDuration(stats.avgDuration)}
-            hint="dəqiqə:saniyə"
+            change={{ value: "dəqiqə:saniyə", trend: "neutral", label: "orta vaxt" }}
+            icon={<Clock className="h-5 w-5" />}
+            chartData={[30, 45, 60, 50, 65, 55, stats.avgDuration]}
+          />
+
+          <StatCardGlass
+            title="Cavabsız suallar"
+            value={String(stats.openQuestions)}
+            change={{ value: "Bilik bazası", trend: stats.openQuestions > 0 ? "down" : "neutral", label: "tamamlanmalı" }}
+            icon={<HelpCircle className="h-5 w-5" />}
+            chartData={[1, 2, 0, 1, 0, stats.openQuestions]}
           />
         </div>
       )}
 
-      {calls.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <SearchInput
+      {/* ── SEARCH & FILTER CONTROLS ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6b6b6b]" />
+          <input
+            type="text"
             value={query}
-            onChange={(v) => {
-              setQuery(v);
+            onChange={(e) => {
+              setQuery(e.target.value);
               setPage(1);
             }}
-            placeholder="Nömrəyə görə axtar…"
-            className="max-w-xs"
+            placeholder="Nömrəyə görə axtar..."
+            className="h-10 w-full rounded-full border border-[#e5e5e5] bg-white pl-10 pr-4 text-xs sm:text-sm text-[#0a0a0a] placeholder:text-[#6b6b6b] focus:border-[#0a0a0a] focus:outline-none transition-colors shadow-xs"
           />
-          <Select
-            aria-label="Status"
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            options={STATUS_FILTER_OPTIONS}
-            containerClassName="w-52"
-          />
+            className="h-10 rounded-full border border-[#e5e5e5] bg-white px-4 text-xs sm:text-sm text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none transition-colors shadow-xs cursor-pointer"
+          >
+            {STATUS_FILTER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+      </div>
 
-      <Card>
-        {calls.length === 0 ? (
-          <EmptyState message="Hələ zəng qeydə alınmayıb." />
-        ) : filteredCalls.length === 0 ? (
-          <EmptyState message="Axtarışa uyğun zəng tapılmadı." />
+      {/* ── CALLS TABLE (GLASS CONTAINER) ── */}
+      <GlassTableContainer>
+        {filteredCalls.length === 0 ? (
+          <div className="py-16 text-center text-xs text-[#6b6b6b]">
+            Axtarışa uyğun heç bir zəng tapılmadı.
+          </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border text-xs uppercase tracking-wide text-fg-faint">
-                    <th className="px-5 py-3 font-medium">Nömrə</th>
-                    <th className="px-5 py-3 font-medium">Dil</th>
-                    <th className="px-5 py-3 font-medium">Tarix</th>
-                    <th className="px-5 py-3 font-medium">Müddət</th>
-                    <th className="px-5 py-3 font-medium">Status</th>
-                    <th className="px-5 py-3 font-medium">Bilik bazası</th>
-                  </tr>
-                </thead>
-                <tbody ref={bodyRef}>
-                  {visible.map((call) => {
-                    const st = statusLabels[call.status];
-                    return (
-                      // Bütün sətir kliklənir. Əvvəl yalnız nömrə link idi, yəni zəngi açmaq
-                      // üçün məhz o yazıya dəymək lazım gəlirdi.
-                      <tr
-                        key={call.id}
-                        onClick={() => navigate(`/calls/${call.id}`)}
-                        className="cursor-pointer border-b border-border/60 last:border-0 hover:bg-surface-2/60"
-                      >
-                        <td className="px-5 py-3 font-medium text-fg">
-                          {call.callerNumber ?? "Naməlum nömrə"}
-                        </td>
-                        <td className="px-5 py-3 text-fg-muted">
-                          {call.languageDetected ?? "—"}
-                        </td>
-                        <td className="px-5 py-3 text-fg-muted">
-                          {formatDateTime(call.startedAt)}
-                        </td>
-                        <td className="px-5 py-3 text-fg-muted">
-                          {formatDuration(call.durationSec)}
-                        </td>
-                        <td className="px-5 py-3">
-                          <StatusText tone={st.tone}>{st.label}</StatusText>
-                        </td>
-                        {/* Dizayn qaydası: nişan/badge yoxdur — vəziyyət düz rəngli mətndir. */}
-                        <td className="px-5 py-3">
-                          {call.openQuestionCount > 0 ? (
-                            <StatusText tone="warn">
-                              {call.openQuestionCount} cavabsız sual
-                            </StatusText>
-                          ) : (
-                            <span className="text-fg-faint">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <GlassTable>
+              <GlassTHead>
+                <tr>
+                  <GlassTH>Nömrə</GlassTH>
+                  <GlassTH>Dil</GlassTH>
+                  <GlassTH>Tarix</GlassTH>
+                  <GlassTH>Müddət</GlassTH>
+                  <GlassTH>Status</GlassTH>
+                  <GlassTH>Bilik Bazası</GlassTH>
+                  <GlassTH className="text-right">Əməliyyat</GlassTH>
+                </tr>
+              </GlassTHead>
 
-            {/* Səhifələmə brauzerdədir: backend GET /calls düz siyahı qaytarır, yəni bütün
-                zənglər onsuz da yüklənib və burada sadəcə göstərilən hissə kəsilir.
-                Siyahı minlərə çatanda həll backend-ə səhifələmə əlavə etməkdir. */}
-            {/* Pagination öz üst xəttini və boşluğunu özü çəkir — əlavə sarğı ikiqat
-                çərçivə yaradır. Bir səhifə qalanda da göstərilir: "27 zəng" sətri
-                cədvəlin altında dayanır, yəni sayğac səhifələmədən asılı deyil. */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3">
-              <Select
-                containerClassName="w-48"
-                aria-label="Səhifədəki sətir sayı"
-                value={sizeChoice}
-                onChange={(e) => {
-                  setSizeChoice(e.target.value);
-                  setPage(1);
-                }}
-                options={SIZE_OPTIONS}
-              />
-              <Pagination
-                page={safePage}
-                pageCount={pageCount}
-                onChange={setPage}
-                totalLabel={`${filteredCalls.length} zəng`}
-              />
+              <GlassTBody>
+                {visible.map((call) => {
+                  const st = statusMap[call.status] ?? { label: call.status, variant: "muted" as const };
+
+                  return (
+                    <GlassTR
+                      key={call.id}
+                      clickable
+                      onClick={() => navigate(`/calls/${call.id}`)}
+                    >
+                      <GlassTD>
+                        <span className="font-mono font-semibold text-[#0a0a0a] text-xs sm:text-sm">
+                          {call.callerNumber ?? "Naməlum nömrə"}
+                        </span>
+                      </GlassTD>
+
+                      <GlassTD>
+                        <span className="text-[#6b6b6b] text-xs">
+                          {call.languageDetected ?? "—"}
+                        </span>
+                      </GlassTD>
+
+                      <GlassTD>
+                        <span className="text-[#0a0a0a] text-xs">
+                          {formatDateTime(call.startedAt)}
+                        </span>
+                      </GlassTD>
+
+                      <GlassTD>
+                        <span className="font-mono text-xs text-[#0a0a0a]">
+                          {formatDuration(call.durationSec)}
+                        </span>
+                      </GlassTD>
+
+                      {/* Plain Status Text — NO badges, NO dots */}
+                      <GlassTD>
+                        <StatusText variant={st.variant}>
+                          {st.label}
+                        </StatusText>
+                      </GlassTD>
+
+                      <GlassTD>
+                        {call.openQuestionCount > 0 ? (
+                          <StatusText variant="warn">
+                            {call.openQuestionCount} cavabsız sual
+                          </StatusText>
+                        ) : (
+                          <span className="text-[#6b6b6b] text-xs">—</span>
+                        )}
+                      </GlassTD>
+
+                      <GlassTD className="text-right">
+                        <GlassButton
+                          size="xs"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/calls/${call.id}`);
+                          }}
+                          rightIcon={<ArrowRight className="h-3 w-3" />}
+                        >
+                          Baxış
+                        </GlassButton>
+                      </GlassTD>
+                    </GlassTR>
+                  );
+                })}
+              </GlassTBody>
+            </GlassTable>
+
+            {/* Pagination footer */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e5e5] px-6 py-4 bg-[#fafafa]">
+              <span className="text-xs text-[#6b6b6b] font-mono">
+                Cəmi {filteredCalls.length} zəng
+              </span>
+
+              <div className="flex items-center gap-2">
+                <GlassButton
+                  size="xs"
+                  variant="secondary"
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Əvvəlki
+                </GlassButton>
+
+                <span className="text-xs font-mono text-[#0a0a0a] px-2">
+                  {safePage} / {pageCount}
+                </span>
+
+                <GlassButton
+                  size="xs"
+                  variant="secondary"
+                  disabled={safePage >= pageCount}
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                >
+                  Növbəti
+                </GlassButton>
+              </div>
             </div>
           </>
         )}
-      </Card>
+      </GlassTableContainer>
     </div>
   );
 }
