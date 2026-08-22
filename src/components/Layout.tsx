@@ -3,8 +3,11 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   PhoneCall,
+  Megaphone,
   Users,
   Database,
+  Boxes,
+  Cpu,
   CheckCircle,
   UserCheck,
   Layers,
@@ -26,9 +29,12 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
-  { to: "/calls", label: "Zənglər", icon: <PhoneCall className="h-4 w-4" /> },
+  { to: "/calls", label: "Gələn Zənglər", icon: <PhoneCall className="h-4 w-4" /> },
+  { to: "/campaigns", label: "Çıxan Zənglər", icon: <Megaphone className="h-4 w-4" /> },
   { to: "/customers", label: "Müştərilər", icon: <Users className="h-4 w-4" /> },
+  { to: "/catalog", label: "Kataloq", icon: <Boxes className="h-4 w-4" /> },
   { to: "/rag", label: "Bilik bazası", icon: <Database className="h-4 w-4" /> },
+  { to: "/integrations", label: "İnteqrasiyalar", icon: <Cpu className="h-4 w-4" /> },
   { to: "/approvals", label: "Təsdiqlər", icon: <CheckCircle className="h-4 w-4" /> },
   { to: "/team", label: "Komanda", icon: <UserCheck className="h-4 w-4" /> },
   { to: "/roles", label: "Rollar", icon: <Layers className="h-4 w-4" /> },

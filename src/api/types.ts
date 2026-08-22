@@ -14,17 +14,21 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
+export type TenantIndustry =
+  | "RENTAL"
+  | "BEAUTY_SALON"
+  | "RESTAURANT"
+  | "CLINIC"
+  | "AUTO_SERVICE"
+  | "RETAIL"
+  | "SERVICES";
+
 export interface TenantConfig {
   greetingText: string;
   workingHours: string;
   handoffNumber: string;
-  // Backend (languageConfig) sərbəst metn sutunudur - sabit enum deyil. CES seed-inde hetta
-  // sade kod deyil, JSON blok saxlanilir (mes. {"default":"az","supported":["az","ru","en"]}),
-  // buna gore panel bunu strukturlasdirilmamis metn kimi qebul edir/gonderir.
   language: string;
-  // Səs tanımanın (Soniox STT) bu tenant-a xas köməkçiləri - VapiAssistantProvisioner
-  // bunları hər müəssisənin öz şirkət adları/məhsulları/jarqonu ilə vergüllə ayrılmış
-  // customVocabulary siyahısına çevirir. Ümumi dilin sözləri deyil - nadir/sahəyə xas sözlər.
+  industry: TenantIndustry;
   sttDomain: string;
   sttTopic: string;
   sttVocabulary: string;
@@ -33,6 +37,7 @@ export interface TenantConfig {
 export interface Tenant {
   id: string;
   name: string;
+  industry: TenantIndustry;
   config: TenantConfig;
 }
 

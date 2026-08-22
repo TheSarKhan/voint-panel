@@ -96,6 +96,9 @@ export function SettingsPage() {
     if ((form.language ?? "") !== (initialConfig.language ?? "")) {
       changedFields.language = form.language;
     }
+    if ((form.industry ?? "RENTAL") !== (initialConfig.industry ?? "RENTAL")) {
+      changedFields.industry = form.industry;
+    }
     if ((form.sttVocabulary ?? "") !== (initialConfig.sttVocabulary ?? "")) {
       changedFields.sttVocabulary = form.sttVocabulary;
     }
@@ -181,6 +184,28 @@ export function SettingsPage() {
                 setForm({ ...form, handoffNumber: e.target.value });
               }}
             />
+          </Field>
+
+          <Field
+            label="Biznes Kateqoriyası (Fəaliyyət Sahəsi)"
+            help="Sistem və kataloq paneli seçilmiş biznes sahənizə uyğun xüsusi sahələr və terminologiya ilə fərdiləşdirilir."
+          >
+            <select
+              className={inputCls}
+              value={form.industry || "RENTAL"}
+              onChange={(e) => {
+                setMessage(null);
+                setForm({ ...form, industry: e.target.value as any });
+              }}
+            >
+              <option value="RENTAL">🚜 Ağır Tikinti Texnikası və İcarə</option>
+              <option value="BEAUTY_SALON">💇‍♂️ Bərbər və Gözəllik Salonu</option>
+              <option value="RESTAURANT">🍽️ Restoran, Kafe və Qida Menyusu</option>
+              <option value="CLINIC">🏥 Klinika və Tibb Mərkəzi</option>
+              <option value="AUTO_SERVICE">🚗 Avto-Servis və Usta Xidmətləri</option>
+              <option value="RETAIL">🛍️ Pərakəndə Satış, Mağaza və Aptek</option>
+              <option value="SERVICES">💼 Ümumi Xidmətlər və Konsaltinq</option>
+            </select>
           </Field>
 
           <div>

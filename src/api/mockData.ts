@@ -21,16 +21,18 @@ export const mockUser: AuthUser = {
 
 export const mockTenant: Tenant = {
   id: MOCK_TENANT_ID,
-  name: "CES Klinikası",
+  name: "CES Texnika İcarəsi",
+  industry: "RENTAL",
   config: {
     greetingText:
-      "Salam, CES Klinikasına xoş gəlmisiniz! Mən sizin virtual assistentinizəm. Sizə necə kömək edə bilərəm?",
+      "Salam, CES Tikinti Texnikasına xoş gəlmisiniz! Sizə necə kömək edə bilərəm?",
     workingHours: "B.e–Cümə 09:00–18:00, Şənbə 10:00–14:00",
     handoffNumber: "+994 12 555 01 02",
     language: "az",
-    sttDomain: "",
-    sttTopic: "",
-    sttVocabulary: "CES, texnika icarəsi, ekskavator, buldozer",
+    industry: "RENTAL",
+    sttDomain: "Ağır tikinti texnikası icarəsi",
+    sttTopic: "Ekskavator, kran və texnika icarəsi qiymətləri",
+    sttVocabulary: "CES, texnika icarəsi, ekskavator, buldozer, JCB",
   },
 };
 

@@ -8,7 +8,10 @@ import { DashboardPage } from "../pages/Dashboard";
 import { CallsPage } from "../pages/Calls";
 import { CallDetailPage } from "../pages/CallDetail";
 import { CustomersPage } from "../pages/Customers";
+import { CatalogPage } from "../pages/Catalog";
+import { CampaignsPage } from "../pages/Campaigns";
 import { RagDataPage } from "../pages/RagData";
+import { IntegrationsPage } from "../pages/Integrations";
 import { ApprovalsPage } from "../pages/Approvals";
 import { TeamPage } from "../pages/Team";
 import { RolesPage } from "../pages/Roles";
@@ -40,8 +43,11 @@ export const router = createBrowserRouter([
           { path: "/", element: <DashboardPage /> },
           { path: "/calls", element: <CallsPage /> },
           { path: "/calls/:callId", element: <CallDetailPage /> },
+          { path: "/campaigns", element: <CampaignsPage /> },
           { path: "/customers", element: <CustomersPage /> },
+          { path: "/catalog", element: <CatalogPage /> },
           { path: "/rag", element: <RagDataPage /> },
+          { path: "/integrations", element: <IntegrationsPage /> },
           { path: "/approvals", element: <ApprovalsPage /> },
           { path: "/team", element: <TeamPage /> },
           { path: "/roles", element: <RolesPage /> },

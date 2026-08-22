@@ -112,18 +112,30 @@ export function PermissionMatrix({
                       <span>{r.label}</span>
                     </label>
                   </TD>
-                  {catalog.actions.map((a) => (
-                    <TD key={a.value} className="text-center">
-                      <input
-                        type="checkbox"
-                        aria-label={`${r.label}, ${a.label}`}
-                        checked={has(r.value, a.value)}
-                        disabled={disabled}
-                        onChange={() => toggle(r.value, a.value)}
-                        className="h-4 w-4 cursor-pointer accent-accent disabled:cursor-not-allowed"
-                      />
-                    </TD>
-                  ))}
+                  {catalog.actions.map((a) => {
+                    const isDirectExec = r.value === "APPROVAL" && a.value === "CREATE";
+                    return (
+                      <TD key={a.value} className="text-center">
+                        <div className="inline-flex flex-col items-center">
+                          <input
+                            type="checkbox"
+                            aria-label={`${r.label}, ${a.label}`}
+                            checked={has(r.value, a.value)}
+                            disabled={disabled}
+                            onChange={() => toggle(r.value, a.value)}
+                            className={`h-4 w-4 cursor-pointer disabled:cursor-not-allowed ${
+                              isDirectExec ? "accent-[#39ff14]" : "accent-accent"
+                            }`}
+                          />
+                          {isDirectExec && (
+                            <span className="mt-0.5 text-[9px] font-medium text-emerald-600">
+                              (Təsdiqsiz)
+                            </span>
+                          )}
+                        </div>
+                      </TD>
+                    );
+                  })}
                   <TD className="text-right">
                     <button
                       type="button"

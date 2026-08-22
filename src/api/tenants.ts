@@ -1,9 +1,7 @@
 import { delay, http, withFallback } from "./client";
 import { mockTenant } from "./mockData";
-import type { Tenant, TenantConfig } from "./types";
+import type { Tenant, TenantConfig, TenantIndustry } from "./types";
 
-// Backend (com.starsoft.voint.tenant.dto.TenantResponse) duz (flat) obyektdir - panelin
-// daxili Tenant tipi ise config-i ayri obyektde saxlayir. Burada map olunur.
 interface BackendTenantResponse {
   id: string;
   name: string;
@@ -12,6 +10,7 @@ interface BackendTenantResponse {
   workingHours: string | null;
   handoffNumber: string | null;
   languageConfig: string | null;
+  industry: TenantIndustry | null;
   sttDomain: string | null;
   sttTopic: string | null;
   sttVocabulary: string | null;
@@ -19,14 +18,17 @@ interface BackendTenantResponse {
 }
 
 function toTenant(t: BackendTenantResponse): Tenant {
+  const ind: TenantIndustry = t.industry || "RENTAL";
   return {
     id: t.id,
     name: t.name,
+    industry: ind,
     config: {
       greetingText: t.greetingText ?? "",
       workingHours: t.workingHours ?? "",
       handoffNumber: t.handoffNumber ?? "",
       language: t.languageConfig ?? "",
+      industry: ind,
       sttDomain: t.sttDomain ?? "",
       sttTopic: t.sttTopic ?? "",
       sttVocabulary: t.sttVocabulary ?? "",
@@ -58,6 +60,7 @@ export function updateTenantConfig(
       if (config.workingHours !== undefined) payload.workingHours = config.workingHours;
       if (config.handoffNumber !== undefined) payload.handoffNumber = config.handoffNumber;
       if (config.language !== undefined) payload.languageConfig = config.language;
+      if (config.industry !== undefined) payload.industry = config.industry;
       if (config.sttDomain !== undefined) payload.sttDomain = config.sttDomain;
       if (config.sttTopic !== undefined) payload.sttTopic = config.sttTopic;
       if (config.sttVocabulary !== undefined) payload.sttVocabulary = config.sttVocabulary;
