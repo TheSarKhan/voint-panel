@@ -10,11 +10,10 @@ interface TenantState {
   clear: () => void;
 }
 
-export const useTenantStore = create<TenantState>()((set, get) => ({
+export const useTenantStore = create<TenantState>()((set) => ({
   tenant: null,
   loading: false,
   loadTenant: async (tenantId) => {
-    if (get().loading) return;
     set({ loading: true });
     try {
       const tenant = await getTenant(tenantId);

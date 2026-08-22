@@ -1,11 +1,15 @@
 import { useEffect, useState, useMemo, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Users,
   UserPlus,
   Edit2,
   Search,
   Clock,
+  ArrowRight,
+  CheckCircle2,
+  PhoneCall,
+  Sparkles,
 } from "lucide-react";
 import { createCustomer, getCustomers, updateCustomer } from "../api/customers";
 import { getCalls } from "../api/calls";
@@ -35,6 +39,7 @@ const callStatusLabels: Record<CallSummary["status"], { label: string; variant: 
 
 export function CustomersPage() {
   const tenantId = useTenantId();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [customers, setCustomers] = useState<Customer[] | null>(null);
   const [calls, setCalls] = useState<CallSummary[]>([]);
@@ -45,6 +50,11 @@ export function CustomersPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  // New Customer Modal state
+  const [newTab, setNewTab] = useState<"calls" | "manual">("calls");
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const [callSearchQuery, setCallSearchQuery] = useState("");
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([getCustomers(tenantId), getCalls(tenantId)])
@@ -52,10 +62,22 @@ export function CustomersPage() {
         if (cancelled) return;
         setCustomers(cs);
         setCalls(cl);
+
         const phone = searchParams.get("phone");
         if (phone) {
           const match = cs.find((c) => c.phone === phone);
           if (match) setSelected(match);
+        }
+
+        const newPhone = searchParams.get("newPhone");
+        if (newPhone) {
+          setEditing("new");
+          setForm({
+            phone: newPhone,
+            name: searchParams.get("newName") || "",
+            note: searchParams.get("newNote") || "",
+          });
+          setNewTab("calls");
         }
       })
       .catch(() => {
@@ -73,15 +95,41 @@ export function CustomersPage() {
       list = list.filter(
         (c) =>
           c.name.toLowerCase().includes(q) ||
-          c.phone.toLowerCase().includes(q)
+          c.phone.toLowerCase().includes(q),
       );
     }
     return list;
   }, [customers, query]);
 
+  // Unique recent calls for selecting in the modal
+  const recentCallsList = useMemo(() => {
+    let list = calls.filter((c) => c.callerNumber && c.callerNumber.trim() !== "");
+    const q = callSearchQuery.trim().toLowerCase();
+    if (q) {
+      list = list.filter(
+        (c) =>
+          (c.callerNumber ?? "").toLowerCase().includes(q) ||
+          (c.customerName ?? "").toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [calls, callSearchQuery]);
+
   const openNew = () => {
     setForm(emptyForm);
+    setSelectedCallId(null);
+    setNewTab("calls");
+    setCallSearchQuery("");
     setEditing("new");
+  };
+
+  const selectCallForCustomer = (call: CallSummary) => {
+    setSelectedCallId(call.id);
+    setForm({
+      phone: call.callerNumber,
+      name: call.customerName || "",
+      note: form.note || "",
+    });
   };
 
   const openEdit = (c: Customer) => {
@@ -96,7 +144,7 @@ export function CustomersPage() {
       if (editing === "new") {
         const created = await createCustomer(tenantId, {
           phone: form.phone.trim(),
-          name: form.name.trim(),
+          name: form.name.trim() || form.phone.trim(),
           note: form.note.trim() || undefined,
         });
         setCustomers((prev) => (prev ? [created, ...prev] : [created]));
@@ -104,11 +152,11 @@ export function CustomersPage() {
       } else if (editing) {
         const updated = await updateCustomer(tenantId, editing.id, {
           phone: form.phone.trim(),
-          name: form.name.trim(),
+          name: form.name.trim() || form.phone.trim(),
           note: form.note.trim() || undefined,
         });
         setCustomers((prev) =>
-          prev ? prev.map((c) => (c.id === updated.id ? updated : c)) : prev
+          prev ? prev.map((c) => (c.id === updated.id ? updated : c)) : prev,
         );
         setSelected((s) => (s?.id === updated.id ? updated : s));
       }
@@ -140,6 +188,7 @@ export function CustomersPage() {
     );
   }
 
+  // Selected customer's call history
   const history = selected
     ? calls.filter((c) => c.callerNumber === selected.phone)
     : [];
@@ -163,7 +212,7 @@ export function CustomersPage() {
           leftIcon={<UserPlus className="h-4 w-4" />}
           onClick={openNew}
         >
-          Yeni Müştəri
+          Yeni Müştəri Əlavə Et
         </GlassButton>
       </div>
 
@@ -284,7 +333,8 @@ export function CustomersPage() {
                         return (
                           <div
                             key={call.id}
-                            className="p-3 rounded-xl border border-[#e5e5e5] bg-white flex items-center justify-between text-xs hover:border-[#0a0a0a] transition-all"
+                            onClick={() => navigate(`/calls/${call.id}`)}
+                            className="p-3 rounded-xl border border-[#e5e5e5] bg-white flex items-center justify-between text-xs hover:border-[#0a0a0a] hover:bg-[#fafafa] transition-all cursor-pointer group"
                           >
                             <div>
                               <StatusText variant={st.variant}>
@@ -295,11 +345,14 @@ export function CustomersPage() {
                               </span>
                             </div>
 
-                            {call.languageDetected && (
-                              <span className="text-[10px] text-[#6b6b6b] font-mono">
-                                {call.languageDetected}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {call.languageDetected && (
+                                <span className="text-[10px] text-[#6b6b6b] font-mono">
+                                  {call.languageDetected}
+                                </span>
+                              )}
+                              <ArrowRight className="h-3.5 w-3.5 text-[#6b6b6b] opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
                           </div>
                         );
                       })}
@@ -317,52 +370,164 @@ export function CustomersPage() {
         </div>
       </div>
 
-      {/* ── EDIT / CREATE MODAL ── */}
+      {/* ── EDIT / CREATE MODAL (INTEGRATED WITH CALLS) ── */}
       {editing !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-[#e5e5e5] space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-base font-semibold text-[#0a0a0a]">
-              {editing === "new" ? "Yeni Müştəri Əlavə Et" : "Müştərini Redaktə Et"}
-            </h3>
+          <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl border border-[#e5e5e5] space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#e5e5e5] pb-4">
+              <div>
+                <h3 className="text-base font-semibold text-[#0a0a0a]">
+                  {editing === "new" ? "Yeni Müştəri Əlavə Et" : "Müştərini Redaktə Et"}
+                </h3>
+                {editing === "new" && (
+                  <p className="text-xs text-[#6b6b6b] mt-0.5">
+                    Son zənglərdən birini seçərək və ya əl ilə nömrə daxil edərək CRM kartı açın
+                  </p>
+                )}
+              </div>
+            </div>
 
+            {/* TAB SELECTOR FOR NEW CUSTOMER */}
+            {editing === "new" && (
+              <div className="flex gap-2 p-1 bg-[#fafafa] rounded-2xl border border-[#e5e5e5]">
+                <button
+                  type="button"
+                  onClick={() => setNewTab("calls")}
+                  className={`flex-1 py-2 px-3 text-xs font-medium rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    newTab === "calls"
+                      ? "bg-white text-[#0a0a0a] shadow-xs font-semibold"
+                      : "text-[#6b6b6b] hover:text-[#0a0a0a]"
+                  }`}
+                >
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  <span>Son Zənglərdən Seç (İnteqrasiya)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setNewTab("manual")}
+                  className={`flex-1 py-2 px-3 text-xs font-medium rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                    newTab === "manual"
+                      ? "bg-white text-[#0a0a0a] shadow-xs font-semibold"
+                      : "text-[#6b6b6b] hover:text-[#0a0a0a]"
+                  }`}
+                >
+                  <Edit2 className="h-3.5 w-3.5" />
+                  <span>Əl ilə Nömrə Daxil Et</span>
+                </button>
+              </div>
+            )}
+
+            {/* RECENT CALLS PICKER */}
+            {editing === "new" && newTab === "calls" && (
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#6b6b6b]" />
+                  <input
+                    type="text"
+                    value={callSearchQuery}
+                    onChange={(e) => setCallSearchQuery(e.target.value)}
+                    placeholder="Zəng nömrəsi və ya ad üzrə axtar..."
+                    className="h-8 w-full rounded-xl border border-[#e5e5e5] bg-white pl-8 pr-3 text-xs text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none"
+                  />
+                </div>
+
+                <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-2xl border border-[#e5e5e5] bg-[#fafafa] p-2">
+                  {recentCallsList.length === 0 ? (
+                    <p className="text-xs text-[#6b6b6b] text-center py-4">
+                      Seçim üçün zəng tapılmadı.
+                    </p>
+                  ) : (
+                    recentCallsList.slice(0, 15).map((call) => {
+                      const isPicked = selectedCallId === call.id || form.phone === call.callerNumber;
+                      return (
+                        <div
+                          key={call.id}
+                          onClick={() => selectCallForCustomer(call)}
+                          className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between text-xs ${
+                            isPicked
+                              ? "border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/20 text-[#0a0a0a]"
+                              : "border-[#e5e5e5] bg-white hover:border-[#0a0a0a] text-[#0a0a0a]"
+                          }`}
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-semibold text-xs">
+                                {call.callerNumber}
+                              </span>
+                              {call.customerName && (
+                                <span className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium flex items-center gap-1">
+                                  <Sparkles className="h-3 w-3" />
+                                  {call.customerName}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-[#6b6b6b] block mt-0.5">
+                              {formatDateTime(call.startedAt)} · {formatDuration(call.durationSec)}
+                            </span>
+                          </div>
+
+                          <div className="shrink-0">
+                            {isPicked ? (
+                              <span className="inline-flex items-center gap-1 text-xs text-emerald-700 font-semibold">
+                                <CheckCircle2 className="h-4 w-4" />
+                                Seçildi
+                              </span>
+                            ) : (
+                              <span className="text-xs text-[#6b6b6b] hover:text-[#0a0a0a]">
+                                Seç
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* FORM INPUTS */}
             <form onSubmit={handleSave} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-[#0a0a0a] mb-1.5">
-                  Ad və Soyad
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Məs: Əli Məmmədov"
-                  className="h-10 w-full rounded-xl border border-[#e5e5e5] px-3.5 text-xs sm:text-sm text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none transition-colors"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[#0a0a0a] mb-1.5">
+                    Telefon Nömrəsi
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+994 50 123 45 67"
+                    className="h-10 w-full rounded-xl border border-[#e5e5e5] px-3.5 text-xs sm:text-sm text-[#0a0a0a] font-mono focus:border-[#0a0a0a] focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-[#0a0a0a] mb-1.5">
+                    Ad və Soyad
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="Məs: Rəşad Əliyev"
+                    className="h-10 w-full rounded-xl border border-[#e5e5e5] px-3.5 text-xs sm:text-sm text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none transition-colors"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-medium text-[#0a0a0a] mb-1.5">
-                  Telefon Nömrəsi
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+994 50 123 45 67"
-                  className="h-10 w-full rounded-xl border border-[#e5e5e5] px-3.5 text-xs sm:text-sm text-[#0a0a0a] font-mono focus:border-[#0a0a0a] focus:outline-none transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-[#0a0a0a] mb-1.5">
-                  Qeyd (İstəyə bağlı)
+                  Qeyd / Maraqlandığı Mövzu
                 </label>
                 <textarea
                   rows={3}
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  placeholder="Müştəri haqqında xüsusi qeydlər..."
+                  placeholder="Müştəri haqqında qeydlər, maraqlandığı texnika və s..."
                   className="w-full rounded-xl border border-[#e5e5e5] p-3 text-xs sm:text-sm text-[#0a0a0a] focus:border-[#0a0a0a] focus:outline-none transition-colors resize-none"
                 />
               </div>
@@ -380,9 +545,9 @@ export function CustomersPage() {
                   type="submit"
                   variant="primary"
                   size="sm"
-                  disabled={saving}
+                  disabled={saving || !form.phone.trim()}
                 >
-                  {saving ? "Yadda saxlanılır..." : "Yadda Saxla"}
+                  {saving ? "Yadda saxlanılır..." : "Müştərini Yadda Saxla"}
                 </GlassButton>
               </div>
             </form>

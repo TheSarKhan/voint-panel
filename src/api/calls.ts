@@ -21,6 +21,8 @@ interface BackendCallResponse {
   startedAt: string;
   endedAt: string | null;
   openQuestionCount: number;
+  customerId?: string | null;
+  customerName?: string | null;
 }
 
 interface BackendCallDetailResponse extends BackendCallResponse {
@@ -28,6 +30,7 @@ interface BackendCallDetailResponse extends BackendCallResponse {
   cleanedTranscript: string | null;
   aiSummary: string | null;
   unansweredQuestions: UnansweredQuestion[] | null;
+  customerNotes?: string | null;
 }
 
 function toSummary(c: BackendCallResponse): CallSummary {
@@ -42,6 +45,8 @@ function toSummary(c: BackendCallResponse): CallSummary {
     // Mock rejimde bu sahe yoxdur — 0 verilir ki, siyahi "cavabsiz sual var" deye
     // isaretlemesin. Olmayan melumati var kimi gostermek daha pisdir.
     openQuestionCount: c.openQuestionCount ?? 0,
+    customerId: c.customerId ?? null,
+    customerName: c.customerName ?? null,
   };
 }
 
@@ -72,13 +77,14 @@ export function getCall(tenantId: string, callId: string): Promise<CallDetail> {
         transcript: data.fullTranscript,
         cleanedTranscript: data.cleanedTranscript,
         unansweredQuestions: data.unansweredQuestions ?? [],
+        customerNotes: data.customerNotes ?? null,
       };
     },
     async () => {
       await delay();
       const call = mockCalls.find((c) => c.id === callId);
       if (!call) throw new Error("Zeng tapilmadi");
-      return { ...call, unansweredQuestions: [] };
+      return { ...call, unansweredQuestions: [], customerNotes: null };
     },
   );
 }

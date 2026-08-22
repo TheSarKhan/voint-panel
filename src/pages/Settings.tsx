@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { updateTenantConfig } from "../api/tenants";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { getTenant, updateTenantConfig } from "../api/tenants";
+import { PendingApprovalError } from "../api/client";
 import {
   createTelegramLink,
   deleteTelegramChat,
@@ -19,6 +20,7 @@ import {
   Spinner,
 } from "../components/ui";
 import { IconTrash } from "../components/icons";
+import { LanguagePicker } from "../components/LanguagePicker";
 import { useTenantId } from "../lib/useTenantId";
 import { useTenantStore } from "../store/tenant";
 import { apiErrorText } from "../lib/apiError";
@@ -26,36 +28,98 @@ import { formatDateTime } from "../lib/format";
 
 export function SettingsPage() {
   const tenantId = useTenantId();
-  const tenant = useTenantStore((s) => s.tenant);
-  const loadTenant = useTenantStore((s) => s.loadTenant);
   const setTenant = useTenantStore((s) => s.setTenant);
 
+  const [initialConfig, setInitialConfig] = useState<TenantConfig | null>(null);
   const [form, setForm] = useState<TenantConfig | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!tenant) {
-      void loadTenant(tenantId);
-    } else if (!form) {
-      setForm({ ...tenant.config });
-    }
-  }, [tenant, form, tenantId, loadTenant]);
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    getTenant(tenantId)
+      .then((freshTenant) => {
+        if (cancelled) return;
+        setTenant(freshTenant);
+        setInitialConfig({ ...freshTenant.config });
+        setForm({ ...freshTenant.config });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(apiErrorText(err, "Ayarları yükləmək mümkün olmadı."));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  if (!form) return <Spinner />;
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId, setTenant]);
+
+  const isDirty = useMemo(() => {
+    if (!initialConfig || !form) return false;
+    return (
+      (form.greetingText ?? "") !== (initialConfig.greetingText ?? "") ||
+      (form.workingHours ?? "") !== (initialConfig.workingHours ?? "") ||
+      (form.handoffNumber ?? "") !== (initialConfig.handoffNumber ?? "") ||
+      (form.language ?? "") !== (initialConfig.language ?? "") ||
+      (form.sttDomain ?? "") !== (initialConfig.sttDomain ?? "") ||
+      (form.sttTopic ?? "") !== (initialConfig.sttTopic ?? "") ||
+      (form.sttVocabulary ?? "") !== (initialConfig.sttVocabulary ?? "")
+    );
+  }, [initialConfig, form]);
+
+  if (loading || !form) return <Spinner />;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!isDirty || !initialConfig) return;
     setSaving(true);
     setMessage(null);
     setError(null);
+
+    const changedFields: Partial<TenantConfig> = {};
+    if ((form.greetingText ?? "") !== (initialConfig.greetingText ?? "")) {
+      changedFields.greetingText = form.greetingText;
+    }
+    if ((form.workingHours ?? "") !== (initialConfig.workingHours ?? "")) {
+      changedFields.workingHours = form.workingHours;
+    }
+    if ((form.handoffNumber ?? "") !== (initialConfig.handoffNumber ?? "")) {
+      changedFields.handoffNumber = form.handoffNumber;
+    }
+    if ((form.language ?? "") !== (initialConfig.language ?? "")) {
+      changedFields.language = form.language;
+    }
+    if ((form.sttVocabulary ?? "") !== (initialConfig.sttVocabulary ?? "")) {
+      changedFields.sttVocabulary = form.sttVocabulary;
+    }
+    if ((form.sttDomain ?? "") !== (initialConfig.sttDomain ?? "")) {
+      changedFields.sttDomain = form.sttDomain;
+    }
+    if ((form.sttTopic ?? "") !== (initialConfig.sttTopic ?? "")) {
+      changedFields.sttTopic = form.sttTopic;
+    }
+
     try {
-      const updated = await updateTenantConfig(tenantId, form);
+      const updated = await updateTenantConfig(tenantId, changedFields);
       setTenant(updated);
+      setInitialConfig({ ...updated.config });
+      setForm({ ...updated.config });
       setMessage("Ayarlar yadda saxlanıldı.");
     } catch (e) {
-      setError(apiErrorText(e, "Ayarları yadda saxlamaq mümkün olmadı."));
+      if (e instanceof PendingApprovalError) {
+        setMessage(
+          "Dəyişikliklər qeydə alındı və təsdiq növbəsinə göndərildi. Təsdiqləndikdən sonra qüvvəyə minəcək.",
+        );
+      } else {
+        setError(apiErrorText(e, "Ayarları yadda saxlamaq mümkün olmadı."));
+      }
     } finally {
       setSaving(false);
     }
@@ -71,16 +135,25 @@ export function SettingsPage() {
       {/* Karta en limiti qoyulmur — voint-admin-deki Ayarlar ekrani ile eyni: butun
           daxili sehifeler soldan baslayir ve tam eni tutur. */}
       <Card className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") {
+              e.preventDefault();
+            }
+          }}
+          className="space-y-5"
+        >
           <Field label="Salamlama mətni">
             <textarea
               rows={3}
               required
               className={inputCls}
               value={form.greetingText}
-              onChange={(e) =>
-                setForm({ ...form, greetingText: e.target.value })
-              }
+              onChange={(e) => {
+                setMessage(null);
+                setForm({ ...form, greetingText: e.target.value });
+              }}
             />
           </Field>
 
@@ -90,9 +163,10 @@ export function SettingsPage() {
               className={inputCls}
               placeholder="B.e–Cümə 09:00–18:00"
               value={form.workingHours}
-              onChange={(e) =>
-                setForm({ ...form, workingHours: e.target.value })
-              }
+              onChange={(e) => {
+                setMessage(null);
+                setForm({ ...form, workingHours: e.target.value });
+              }}
             />
           </Field>
 
@@ -102,26 +176,22 @@ export function SettingsPage() {
               className={inputCls}
               placeholder="+994 xx xxx xx xx"
               value={form.handoffNumber}
-              onChange={(e) =>
-                setForm({ ...form, handoffNumber: e.target.value })
-              }
+              onChange={(e) => {
+                setMessage(null);
+                setForm({ ...form, handoffNumber: e.target.value });
+              }}
             />
           </Field>
 
-          <Field label="Dil konfiqurasiyası">
-            {/* Backend serbest metn sutunudur (bezen sade kod - "az", bezen JSON blok -
-                {"default":"az","supported":["az","ru","en"]}) - buna gore sabit seçim
-                siyahisi evezine serbest metn saxlayiriq ki, movcud qiymeti yanlislikla
-                daraltmayaq/xarab etmeyek. */}
-            <input
-              className={inputCls}
-              placeholder='az, ya da {"default":"az","supported":["az","ru","en"]}'
+          <div>
+            <LanguagePicker
               value={form.language}
-              onChange={(e) =>
-                setForm({ ...form, language: e.target.value })
-              }
+              onChange={(val) => {
+                setMessage(null);
+                setForm({ ...form, language: val });
+              }}
             />
-          </Field>
+          </div>
 
           <Field
             label="Səs tanıma lüğəti"
@@ -134,19 +204,29 @@ export function SettingsPage() {
               className={inputCls}
               placeholder="məs. CES, ekskavator, buldozer"
               value={form.sttVocabulary}
-              onChange={(e) =>
-                setForm({ ...form, sttVocabulary: e.target.value })
-              }
+              onChange={(e) => {
+                setMessage(null);
+                setForm({ ...form, sttVocabulary: e.target.value });
+              }}
             />
           </Field>
 
           {message && <p className="text-sm text-ok">{message}</p>}
           {error && <p className="text-sm text-err">{error}</p>}
 
-          <div className="pt-1">
-            <button type="submit" disabled={saving} className={btnPrimary}>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={saving || !isDirty}
+              className={`${btnPrimary} ${!isDirty ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
               {saving ? "Saxlanılır…" : "Yadda saxla"}
             </button>
+            {isDirty && (
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                Yadda saxlanılmamış dəyişikliklər var
+              </span>
+            )}
           </div>
         </form>
       </Card>

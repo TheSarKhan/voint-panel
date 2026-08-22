@@ -7,6 +7,7 @@ import {
   HelpCircle,
   Search,
   ArrowRight,
+  UserPlus,
 } from "lucide-react";
 import { getCalls } from "../api/calls";
 import type { CallStatus, CallSummary } from "../api/types";
@@ -66,7 +67,13 @@ export function CallsPage() {
     let list = calls ?? [];
     if (statusFilter) list = list.filter((c) => c.status === statusFilter);
     const q = query.trim().toLowerCase();
-    if (q) list = list.filter((c) => (c.callerNumber ?? "").toLowerCase().includes(q));
+    if (q) {
+      list = list.filter(
+        (c) =>
+          (c.callerNumber ?? "").toLowerCase().includes(q) ||
+          (c.customerName ?? "").toLowerCase().includes(q),
+      );
+    }
     return list;
   }, [calls, query, statusFilter]);
 
@@ -208,7 +215,7 @@ export function CallsPage() {
             <GlassTable>
               <GlassTHead>
                 <tr>
-                  <GlassTH>Nömrə</GlassTH>
+                  <GlassTH>Müştəri / Nömrə</GlassTH>
                   <GlassTH>Dil</GlassTH>
                   <GlassTH>Tarix</GlassTH>
                   <GlassTH>Müddət</GlassTH>
@@ -229,9 +236,25 @@ export function CallsPage() {
                       onClick={() => navigate(`/calls/${call.id}`)}
                     >
                       <GlassTD>
-                        <span className="font-mono font-semibold text-[#0a0a0a] text-xs sm:text-sm">
-                          {call.callerNumber ?? "Naməlum nömrə"}
-                        </span>
+                        <div className="flex flex-col">
+                          {call.customerName ? (
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/customers?phone=${encodeURIComponent(call.callerNumber)}`);
+                                }}
+                                className="font-medium text-[#0a0a0a] text-xs sm:text-sm hover:underline hover:text-emerald-700 text-left"
+                              >
+                                {call.customerName}
+                              </button>
+                            </div>
+                          ) : null}
+                          <span className="font-mono text-[#6b6b6b] text-xs">
+                            {call.callerNumber ?? "Naməlum nömrə"}
+                          </span>
+                        </div>
                       </GlassTD>
 
                       <GlassTD>
@@ -270,17 +293,35 @@ export function CallsPage() {
                       </GlassTD>
 
                       <GlassTD className="text-right">
-                        <GlassButton
-                          size="xs"
-                          variant="secondary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/calls/${call.id}`);
-                          }}
-                          rightIcon={<ArrowRight className="h-3 w-3" />}
-                        >
-                          Baxış
-                        </GlassButton>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!call.customerName && call.callerNumber && (
+                            <GlassButton
+                              size="xs"
+                              variant="ghost"
+                              title="CRM-də Müştəri kimi saxla"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(
+                                  `/customers?newPhone=${encodeURIComponent(call.callerNumber)}&newName=${encodeURIComponent(call.customerName || "")}`,
+                                );
+                              }}
+                              leftIcon={<UserPlus className="h-3 w-3" />}
+                            >
+                              + Müştəri
+                            </GlassButton>
+                          )}
+                          <GlassButton
+                            size="xs"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/calls/${call.id}`);
+                            }}
+                            rightIcon={<ArrowRight className="h-3 w-3" />}
+                          >
+                            Baxış
+                          </GlassButton>
+                        </div>
                       </GlassTD>
                     </GlassTR>
                   );

@@ -1,25 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  copyRoleFromTemplate,
   createRole,
   deleteRole,
   getCatalog,
-  listRoleTemplates,
   listRoles,
   updateRole,
   type PermissionCatalog,
   type RoleDetail,
 } from "../api/roles";
 import {
-  copyDepartmentFromTemplate,
   createDepartment,
   deleteDepartment,
-  getDepartmentRoles,
-  listDepartmentTemplates,
   listDepartments,
   updateDepartment,
   type Department,
-  type DepartmentCopyResult,
 } from "../api/departments";
 import { listUsers, type PanelUser } from "../api/users";
 import { PermissionMatrix } from "../components/PermissionMatrix";
@@ -83,8 +77,6 @@ export function RolesPage() {
 
   const [departmentForm, setDepartmentForm] = useState<Department | "new" | null>(null);
   const [roleForm, setRoleForm] = useState<RoleDetail | "new" | null>(null);
-  const [importOpen, setImportOpen] = useState<false | string>(false);
-  const [importDepartmentOpen, setImportDepartmentOpen] = useState(false);
 
   const load = async () => {
     const [list, deps, us] = await Promise.all([
@@ -182,12 +174,6 @@ export function RolesPage() {
                 Departamentlər rolları qruplaşdırır. Rollar onların içindədir.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => setImportOpen("")}>
-                  Rolu şablondan gətir
-                </Button>
-                <Button variant="secondary" onClick={() => setImportDepartmentOpen(true)}>
-                  Departamenti şablondan gətir
-                </Button>
                 <Button icon={IconPlus} onClick={() => setDepartmentForm("new")}>
                   Yeni departament
                 </Button>
@@ -285,13 +271,6 @@ export function RolesPage() {
                 description={open.description ?? undefined}
                 actions={
                   <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setImportOpen(open.real ? open.id : "")}
-                    >
-                      Şablondan köçür
-                    </Button>
                     <Button size="sm" icon={IconPlus} onClick={() => setRoleForm("new")}>
                       Yeni rol
                     </Button>
@@ -438,30 +417,6 @@ export function RolesPage() {
           onClose={() => setRoleForm(null)}
           onSaved={async () => {
             setRoleForm(null);
-            await load();
-          }}
-        />
-      )}
-
-      {importOpen !== false && (
-        <ImportTemplateModal
-          tenantId={tenantId}
-          departments={departments}
-          presetDepartmentId={importOpen}
-          onClose={() => setImportOpen(false)}
-          onImported={async () => {
-            setImportOpen(false);
-            await load();
-          }}
-        />
-      )}
-
-      {importDepartmentOpen && (
-        <ImportDepartmentModal
-          tenantId={tenantId}
-          onClose={() => setImportDepartmentOpen(false)}
-          onImported={async () => {
-            setImportDepartmentOpen(false);
             await load();
           }}
         />
@@ -637,247 +592,3 @@ function RoleFormModal({
   );
 }
 
-/** Platform rol şablonunu bu müəssisəyə köçürür. */
-function ImportTemplateModal({
-  tenantId,
-  departments,
-  presetDepartmentId,
-  onClose,
-  onImported,
-}: {
-  tenantId: string;
-  departments: Department[];
-  presetDepartmentId: string;
-  onClose: () => void;
-  onImported: () => void;
-}) {
-  const [templates, setTemplates] = useState<RoleDetail[] | null>(null);
-  const [templateId, setTemplateId] = useState("");
-  const [departmentId, setDepartmentId] = useState(presetDepartmentId);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    listRoleTemplates(tenantId)
-      .then((list) => {
-        setTemplates(list);
-        setTemplateId(list[0]?.id ?? "");
-      })
-      .catch(() => setError("Şablonlar yüklənmədi."));
-  }, [tenantId]);
-
-  const chosen = templates?.find((t) => t.id === templateId);
-  const grants = chosen ? Object.values(chosen.permissions).reduce((n, a) => n + a.length, 0) : 0;
-
-  const importIt = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await copyRoleFromTemplate(tenantId, templateId, departmentId || undefined);
-      onImported();
-    } catch (e) {
-      setError(apiErrorText(e, "Gətirilmədi."));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Modal title="Rolu şablondan gətir" onClose={onClose}>
-      <div className="space-y-4">
-        <p className="text-sm text-fg-muted">
-          Hazır rol şablonunun surəti bu müəssisəyə əlavə olunur. Sonra sərbəst dəyişə bilərsən — şablona təsir etmir.
-        </p>
-
-        {!templates ? (
-          <Spinner />
-        ) : templates.length === 0 ? (
-          <Alert tone="info">Hələ şablon yoxdur.</Alert>
-        ) : (
-          <>
-            <Select
-              label="Departament"
-              value={departmentId}
-              onChange={(e) => setDepartmentId(e.target.value)}
-              options={[
-                { value: "", label: "— seçilməyib —" },
-                ...departments.map((d) => ({ value: d.id, label: d.name })),
-              ]}
-            />
-            <Select
-              label="Şablon"
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-              options={templates.map((t) => ({ value: t.id, label: t.name }))}
-              help={chosen ? `${grants} icazə${chosen.description ? `, ${chosen.description}` : ""}` : undefined}
-            />
-          </>
-        )}
-
-        {error && <p className="text-sm text-err">{error}</p>}
-
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
-            Ləğv et
-          </Button>
-          <Button loading={busy} disabled={!templateId} onClick={importIt}>
-            Gətir
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-/**
- * Bütöv bir platform departamentini — və seçilmiş rollarını — bu müəssisəyə köçürür.
- * Rollar defolt hamısı seçili gəlir. Ad toqquşması xəta vermir.
- */
-function ImportDepartmentModal({
-  tenantId,
-  onClose,
-  onImported,
-}: {
-  tenantId: string;
-  onClose: () => void;
-  onImported: () => void;
-}) {
-  const [templateDepartments, setTemplateDepartments] = useState<Department[] | null>(null);
-  const [departmentId, setDepartmentId] = useState("");
-  const [templateRoles, setTemplateRoles] = useState<RoleDetail[] | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<DepartmentCopyResult | null>(null);
-
-  useEffect(() => {
-    listDepartmentTemplates(tenantId)
-      .then((deps) => {
-        setTemplateDepartments(deps);
-        setDepartmentId(deps[0]?.id ?? "");
-      })
-      .catch(() => setError("Şablon departamentlər yüklənmədi."));
-  }, [tenantId]);
-
-  useEffect(() => {
-    if (!departmentId) {
-      setTemplateRoles(null);
-      return;
-    }
-    let cancelled = false;
-    setTemplateRoles(null);
-    getDepartmentRoles(tenantId, departmentId)
-      .then((roles) => {
-        if (cancelled) return;
-        setTemplateRoles(roles);
-        setSelected(new Set(roles.map((r) => r.id)));
-      })
-      .catch(() => {
-        if (!cancelled) setError("Rollar yüklənmədi.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [tenantId, departmentId]);
-
-  const toggle = (roleId: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(roleId)) next.delete(roleId);
-      else next.add(roleId);
-      return next;
-    });
-  };
-
-  const importIt = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      setResult(await copyDepartmentFromTemplate(tenantId, departmentId, Array.from(selected)));
-    } catch (e) {
-      setError(apiErrorText(e, "Köçürülmədi."));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  if (result) {
-    return (
-      <Modal title="Departament köçürüldü" onClose={onImported}>
-        <div className="space-y-4">
-          <p className="text-sm text-fg-muted">
-            <span className="text-fg">{result.department.name}</span> departamenti yaradıldı.
-          </p>
-          {result.copiedRoles.length === 0 ? (
-            <p className="text-sm text-fg-faint">Heç bir rol köçürülmədi.</p>
-          ) : (
-            <ul className="space-y-1 text-sm text-fg-muted">
-              {result.copiedRoles.map((r) => (
-                <li key={r.id}>{r.name}</li>
-              ))}
-            </ul>
-          )}
-          <div className="flex justify-end">
-            <Button onClick={onImported}>Bağla</Button>
-          </div>
-        </div>
-      </Modal>
-    );
-  }
-
-  return (
-    <Modal title="Departamenti şablondan gətir" onClose={onClose}>
-      <div className="space-y-4">
-        <p className="text-sm text-fg-muted">
-          Platform departamentinin surəti — və içindəki seçdiyin rollar — bu müəssisəyə əlavə olunur.
-        </p>
-
-        {!templateDepartments ? (
-          <Spinner />
-        ) : templateDepartments.length === 0 ? (
-          <Alert tone="info">Hələ departament şablonu yoxdur.</Alert>
-        ) : (
-          <Select
-            label="Departament"
-            value={departmentId}
-            onChange={(e) => setDepartmentId(e.target.value)}
-            options={templateDepartments.map((d) => ({ value: d.id, label: d.name }))}
-          />
-        )}
-
-        {departmentId &&
-          (!templateRoles ? (
-            <Spinner />
-          ) : templateRoles.length === 0 ? (
-            <p className="text-sm text-fg-faint">Bu departamentdə rol yoxdur.</p>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-xs font-medium uppercase tracking-wide text-fg-faint">Köçürüləcək rollar</p>
-              {templateRoles.map((r) => (
-                <label key={r.id} className="flex items-center gap-2 text-sm text-fg">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(r.id)}
-                    onChange={() => toggle(r.id)}
-                    className="h-4 w-4 accent-accent"
-                  />
-                  {r.name}
-                </label>
-              ))}
-            </div>
-          ))}
-
-        {error && <p className="text-sm text-err">{error}</p>}
-
-        <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
-            Ləğv et
-          </Button>
-          <Button loading={busy} disabled={!departmentId} onClick={importIt}>
-            Gətir
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}

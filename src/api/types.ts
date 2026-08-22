@@ -50,6 +50,8 @@ export interface CallSummary {
   resolved: boolean; // frontend-de derive olunur: status === "RESOLVED"
   /** Bu zengde hele baglanmamis cavabsiz sual sayi — siyahida isareleme ucun. */
   openQuestionCount: number;
+  customerId?: string | null;
+  customerName?: string | null;
 }
 
 // Zeng bitenden sonra Gemini transkripti oxuyur ve agentin cavablaya bilmediyi suallari cixarir.
@@ -89,6 +91,7 @@ export interface CallDetail extends CallSummary {
   /** Eyni söhbətin AI-təmizlənmiş versiyası (STT kəsişmə/səhv artefaktları çıxarılıb) - null-dursa hələ təhlil olunmayıb, panel xam transkripti göstərir. */
   cleanedTranscript: string | null;
   unansweredQuestions: UnansweredQuestion[];
+  customerNotes?: string | null;
 }
 
 export interface Customer {

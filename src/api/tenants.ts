@@ -49,28 +49,28 @@ export function getTenant(tenantId: string): Promise<Tenant> {
 
 export function updateTenantConfig(
   tenantId: string,
-  config: TenantConfig,
+  config: Partial<TenantConfig>,
 ): Promise<Tenant> {
   return withFallback(
     async () => {
-      // TenantConfigUpdateRequest: butun saheler nullable/qismi - burada hamisini gonderirik.
+      const payload: Record<string, unknown> = {};
+      if (config.greetingText !== undefined) payload.greetingText = config.greetingText;
+      if (config.workingHours !== undefined) payload.workingHours = config.workingHours;
+      if (config.handoffNumber !== undefined) payload.handoffNumber = config.handoffNumber;
+      if (config.language !== undefined) payload.languageConfig = config.language;
+      if (config.sttDomain !== undefined) payload.sttDomain = config.sttDomain;
+      if (config.sttTopic !== undefined) payload.sttTopic = config.sttTopic;
+      if (config.sttVocabulary !== undefined) payload.sttVocabulary = config.sttVocabulary;
+
       const { data } = await http.put<BackendTenantResponse>(
         `/tenants/${tenantId}/config`,
-        {
-          greetingText: config.greetingText,
-          workingHours: config.workingHours,
-          handoffNumber: config.handoffNumber,
-          languageConfig: config.language,
-          sttDomain: config.sttDomain,
-          sttTopic: config.sttTopic,
-          sttVocabulary: config.sttVocabulary,
-        },
+        payload,
       );
       return toTenant(data);
     },
     async () => {
       await delay(350);
-      mockTenant.config = { ...config };
+      mockTenant.config = { ...mockTenant.config, ...config };
       return mockTenant;
     },
   );
